@@ -56,7 +56,19 @@ Now, after moved onto the page, I can access all of the pages for which previous
 
 ![image](https://user-images.githubusercontent.com/87700008/198867998-1ee570ed-edb2-4368-b6ee-5bc043ddef3a.png)
 
-For all of the subdomains found the same html source page
+For all of the subdomains found the same html source page.
+
+Fired the burp & checked for the responses in it. While checking for the requests checked for the download option from the page & it seems like the 'file-type' parameter is vulnerable to the command-injection.
+
+Injected the python3 payload from pentetmonkey after the URL encode & received the connection back on my host.
+
+![image](https://user-images.githubusercontent.com/87700008/200121051-1b8690fa-1e2d-4ab2-8cc5-621d994ce786.png)
+![image](https://user-images.githubusercontent.com/87700008/200121161-a3655009-71af-4c55-a3da-8f1ded2e69a9.png)
+![image](https://user-images.githubusercontent.com/87700008/200121201-5fa44ac7-dad5-4dee-b7bd-c33994c41714.png)
+
+And got the user flage in the 'wizard user' folder.
+![image](https://user-images.githubusercontent.com/87700008/200121309-3fa7dd92-ef97-435a-b8bc-c91045cd7056.png)
+
 
 
 
