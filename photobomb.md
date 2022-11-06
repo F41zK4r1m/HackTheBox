@@ -58,9 +58,13 @@ Now, after moved onto the page, I can access all of the pages for which previous
 
 For all of the subdomains found the same html source page.
 
+-----------------------------------------------------------------------------------------------------------------------------------
+
+**Initial access**
+
 Fired the burp & checked for the responses in it. While checking for the requests checked for the download option from the page & it seems like the 'file-type' parameter is vulnerable to the command-injection.
 
-Injected the python3 payload from pentetmonkey after the URL encode & received the connection back on my host.
+Injected the python3 payload from pentetmonkey after the URL encode & received the connection back on my host.(pwned!🙂)
 
 ![image](https://user-images.githubusercontent.com/87700008/200121051-1b8690fa-1e2d-4ab2-8cc5-621d994ce786.png)
 ![image](https://user-images.githubusercontent.com/87700008/200121161-a3655009-71af-4c55-a3da-8f1ded2e69a9.png)
@@ -69,6 +73,37 @@ Injected the python3 payload from pentetmonkey after the URL encode & received t
 And got the user flage in the 'wizard user' folder.
 
 ![image](https://user-images.githubusercontent.com/87700008/200121309-3fa7dd92-ef97-435a-b8bc-c91045cd7056.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+**Privlege escalation**
+
+Nowm we can check for the sudo permissions using 'sudo -l' :
+
+![image](https://user-images.githubusercontent.com/87700008/200168413-165cff01-1699-4bd1-934d-29fd2a8cfa46.png)
+
+We got one cleanup script which we can run with sudo access, while checking that script found out that it's running the find command without any absolute path.
+
+![image](https://user-images.githubusercontent.com/87700008/200168464-d807ec65-3a35-4272-875e-80794390b848.png)
+
+We can abuse that find path & create our own find file in '/tmp' directory & change the excecution path to our own find file.
+
+	- echo '/bin/bash'> find
+	- chmod +x find
+
+Then after creating the file we can change the execution path for that cleanup script.
+
+	- sudo PATH=$PWD:$PATH /opt/cleanup.sh
+	
+Then we will run that script with sudo privlege for which we already have the access.
+
+	- sudo /opt/cleanup.sh
+
+After running this script we will get the sudo access immediately. (pwned!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/200168652-b5a41bf3-5a84-490c-b546-105f9bb626d2.png)
+
+
 
 
 
