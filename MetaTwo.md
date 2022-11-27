@@ -26,6 +26,24 @@ Found a domain to resolve in the HTTP scan result, i.e. http://metapress.htb
 Added the domian to the host file in /etc/hosts & browsed on that website, found a regular page created with wordpress.
 ![image](https://user-images.githubusercontent.com/87700008/204091873-d6ed202b-d263-4ffe-852d-8b9d0edc5fdd.png)
 
+Tried some Anonymous FTP logon but no luck :
+
+![image](https://user-images.githubusercontent.com/87700008/204127806-544d6160-edb7-404e-82df-146efc167bb7.png)
+
+As detected earlier the website is running on wordpress hence used a wordpress scanner using "wpscan"
+
+![image](https://user-images.githubusercontent.com/87700008/204129169-193b393c-b1b7-4091-a1a1-2c2f92f9b8f3.png)
+
+Since, I have used an api token (which we can get after registering in the website of wpscan) got 28 vulnerabilities :
+
+![image](https://user-images.githubusercontent.com/87700008/204129243-c3b44c92-1432-4ea7-ae75-b9a3ba72cc7e.png)
+![image](https://user-images.githubusercontent.com/87700008/204129252-6fbe354e-5662-4de1-8769-11327171ed90.png)
+![image](https://user-images.githubusercontent.com/87700008/204129328-701655de-0688-4ed9-9f30-0aca6e27b233.png)
+
+
+At this time got the idea that the website is vunerable to wordpress.
+
+
 
 
 
