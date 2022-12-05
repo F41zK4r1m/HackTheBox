@@ -1,4 +1,6 @@
-   ![image](https://user-images.githubusercontent.com/87700008/205619578-28e109d5-9ede-4b75-95c0-fb74bc635c26.png)
+ theme: Hacker
+ 
+ ![image](https://user-images.githubusercontent.com/87700008/205619578-28e109d5-9ede-4b75-95c0-fb74bc635c26.png)
 
 https://app.hackthebox.com/machines/Precious
 
