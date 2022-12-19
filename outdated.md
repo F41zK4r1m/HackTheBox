@@ -237,3 +237,23 @@ We are only having access for these 2 shared :
     
 ![image](https://user-images.githubusercontent.com/87700008/208482631-85d1f67e-9c97-459a-9691-985047e39c30.png)
 
+Tried to connect & enumerate some more into the shares, started with "IPC$" but unable to list any of the files:
+
+        smbclient \\\\outdated.htb\\IPC$ -U "DoesNotExist"
+        
+![image](https://user-images.githubusercontent.com/87700008/208488792-c9d664ae-4ffb-4d9c-8f0e-ddee452265fb.png)
+
+Then I connect to the other "share" and found 1 pdf file in it "NOC_Reminder.pdf" :
+
+        smbclient \\\\outdated.htb\\Shares -U "DoesNotExist"
+        
+![image](https://user-images.githubusercontent.com/87700008/208489249-e411e29f-37ca-41f7-b8ec-8464fb82fa37.png)
+
+Check for the file content in the PDF & observed there is an account "itsupport@outdated.htb" mentioned to contact for the windows update.
+
+![image](https://user-images.githubusercontent.com/87700008/208490980-8db1dcc7-2dfd-4c4d-a101-8ccdf8193c6c.png)
+
+Ran Kerbrute & found 3 other valid usernames as well:
+
+![image](https://user-images.githubusercontent.com/87700008/208497771-57a5c58b-cd34-4192-8df2-e9adca6728f1.png)
+
