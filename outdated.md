@@ -437,7 +437,7 @@ Ran this key & got the "sflowe" NTLM hash :
                
 ![image](https://user-images.githubusercontent.com/87700008/208783652-f6df176f-091d-4775-abd3-61d167b07350.png)
 
-Used that gathered NTLM hash to log-in via evil-winrm & logged-in successfully as "sflowers", also got the user flag here as well:
+Used that gathered NTLM hash to log-in via evil-winrm & logged-in successfully as "sflowers", also got the user flag here as well(pwn3d!🙂):
 
         evil-winrm -i 10.10.11.175 -u sflowers -H '1FCDB1F6015DCB318CC77BB2BDA14DB5'
        
