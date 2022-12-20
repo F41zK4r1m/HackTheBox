@@ -1,5 +1,5 @@
 ![image](https://user-images.githubusercontent.com/87700008/208471850-0dddee32-e47e-4f13-a15e-f8a26ce60f06.png)
-
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Enumeration:**
 
 Port scan :
@@ -257,3 +257,23 @@ Ran Kerbrute & found 3 other valid usernames as well:
 
 ![image](https://user-images.githubusercontent.com/87700008/208497771-57a5c58b-cd34-4192-8df2-e9adca6728f1.png)
 
+With the gathered credentials I tried to gather some hashes via using AS-REP roasting without using any password but no luch here as well :
+
+        python3 /opt/impacket/examples/GetNPUsers.py -dc-ip 10.10.11.175 -request 'dc.outdated.htb/' -no-pass -usersfile user_list.txt
+        
+![image](https://user-images.githubusercontent.com/87700008/208656855-ca0bcb76-dac3-45b2-b2f9-d0b6e4b633f9.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+**Initial access:**
+
+As I tried all the possible ways but didn't get the success now it's time to go with the hint provided in that PDF file. As per the list of vulnerabilities we will try to exploit MSDT exploit CVE-2022-30190 (follina). Also, from port scan I found port 25 open & running a SMTP server & from the pdf "please assist our NOC by e-mailing a link to any internal web applications to
+itsupport@outdated.htb so we can get them added back into our monitoring platform for alerts and notifications" it seems like we can exploit this follina vulnerabiliy.
+
+At this point I am clueless how to proceed further but then I took some help from the Ippsec video & got know about a tool called "swaks". In short it is a SMTP transaction tester. 
+
+![image](https://user-images.githubusercontent.com/87700008/208659001-aa361b97-6774-46ad-ac94-272914a3defa.png)
+
+So, we can use swaks to send an e-mail towards itsupport & we can check for the response while our http server running, so the format to send e-mail to swaks will be something like this :
+
+        swaks --to itsupport@outdated.htb --from "k4rim@0k4rim.htb" --server mail.outdated.htb --header "Subject: Internal web app" --body "http://myip"
