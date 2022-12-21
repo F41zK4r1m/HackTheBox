@@ -442,3 +442,31 @@ Used that gathered NTLM hash to log-in via evil-winrm & logged-in successfully a
         evil-winrm -i 10.10.11.175 -u sflowers -H '1FCDB1F6015DCB318CC77BB2BDA14DB5'
        
 ![image](https://user-images.githubusercontent.com/87700008/208784059-0c780be3-98fe-44ad-8d4a-7c9a3bb1cd33.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+**Privlege escalation:**
+
+I started with running the net user command to check the groups associated with the user & found a group called "WSUS Administrators" in local group membership.
+
+![image](https://user-images.githubusercontent.com/87700008/208897092-ccfcd79d-f024-48ea-966d-726337b1d17c.png)
+
+I checked google if there is any privlege escalation mechanism available & found a blog on hacktricks, ref : https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#wsus
+
+![image](https://user-images.githubusercontent.com/87700008/208897579-25d73b48-f5fd-432a-a427-fd01e7f86c64.png)
+
+As per the blog we can compromise the system if the updates are not requested using httpS but http. To check if the network is using SSL or not we can run :
+
+        reg query HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate /v WUServer
+        
+![image](https://user-images.githubusercontent.com/87700008/208898052-67f77f06-1c72-4557-ad09-ab3c7e365be9.png)
+ 
+And if HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate\AU /v UseWUServer is equals to 1.
+![image](https://user-images.githubusercontent.com/87700008/208898554-00d00132-6af0-436b-a185-c4854125b920.png)
+
+I was checking for the steps to exploit & landed into these websites, ref : https://labs.nettitude.com/blog/introducing-sharpwsus/  https://swisskyrepo.github.io/PayloadsAllTheThingsWeb/Methodology%20and%20Resources/Active%20Directory%20Attack/#wsus-deployment
+
+![image](https://user-images.githubusercontent.com/87700008/208905175-d61ea658-7117-4c89-8143-230d5bdd9492.png)
+
+
+
