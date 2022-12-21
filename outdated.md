@@ -464,7 +464,7 @@ As per the blog we can compromise the system if the updates are not requested us
 And if HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate\AU /v UseWUServer is equals to 1.
 ![image](https://user-images.githubusercontent.com/87700008/208898554-00d00132-6af0-436b-a185-c4854125b920.png)
 
-I was checking for the steps to exploit & landed into these websites, ref : https://labs.nettitude.com/blog/introducing-sharpwsus/  https://swisskyrepo.github.io/PayloadsAllTheThingsWeb/Methodology%20and%20Resources/Active%20Directory%20Attack/#wsus-deployment
+I was checking for the steps to exploit & landed into these websites, ref : https://labs.nettitude.com/blog/introducing-sharpwsus/ , https://swisskyrepo.github.io/PayloadsAllTheThingsWeb/Methodology%20and%20Resources/Active%20Directory%20Attack/#wsus-deployment
 
 ![image](https://user-images.githubusercontent.com/87700008/208905175-d61ea658-7117-4c89-8143-230d5bdd9492.png)
 
