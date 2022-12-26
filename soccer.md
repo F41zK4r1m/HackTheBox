@@ -82,16 +82,15 @@ I uploaded a PHP reverse shell & started listening on my kali machine, browsed o
 
 ![image](https://user-images.githubusercontent.com/87700008/209581628-4ddafa8b-d05c-4b82-ab38-3032e67e5d27.png)
 
-The shell is not stable so first thing I did is stablized the shell, using these :
+The shell is not stable so first thing I did is stablized the shell, using these coomands :
 
       python3 -c 'import pty;pty.spawn("/bin/bash")'
       export TERM=xterm
       stty raw -echo; fg
       
+So, currently I am running as 'www-data' & there is another user directory present, i.e. 'player'. Player directory is having the user flag but I don't have access to it.
 
-
-
-
+![image](https://user-images.githubusercontent.com/87700008/209581967-922a793c-9e44-45db-ac79-5f4dac792b8f.png)
 
 
 
