@@ -93,4 +93,21 @@ So, currently I am running as 'www-data' & there is another user directory prese
 ![image](https://user-images.githubusercontent.com/87700008/209581967-922a793c-9e44-45db-ac79-5f4dac792b8f.png)
 
 
+While enumeration I found that there is some service running on port 9091 which we also observed during our port scan.
+![image](https://user-images.githubusercontent.com/87700008/209657524-a853f776-077b-41d2-98ad-4dd6e04d0338.png)
 
+Then in this location '/etc/nginx/sites-available/soc-player.htb' I found that there is another host running with the server, i.e. 'soc-player.soccer.htb'
+
+![image](https://user-images.githubusercontent.com/87700008/209658715-582fa553-900f-4b51-96fc-af1115127924.png)
+
+Quickly added the domain to host list & browsed it. Observed that this website is bit different from the previous one as it has some extra functionality like : login, singup, etc.
+
+![image](https://user-images.githubusercontent.com/87700008/209658917-f0ac6de0-df28-497c-b771-db3b97103766.png)
+
+I quickly created an account & logged into the website.
+
+![image](https://user-images.githubusercontent.com/87700008/209659221-e980f501-2747-41bd-8fbb-c2f82d4e58f6.png)
+
+After logging in I am at the page 'http://soc-player.soccer.htb/check' & looking at the html source code of the page I found that it is having some ticket checking functionality running on port '**9091**' with some kind of websocket.
+
+![image](https://user-images.githubusercontent.com/87700008/209659991-9cc66be7-d7b7-49e9-977f-57dd5419984c.png)
