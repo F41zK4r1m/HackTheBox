@@ -107,5 +107,80 @@ Started with the quck rustscan for port scanning & found 4 open ports :
         Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
         
 
+Went to the webserver running on port 80, http://10.10.11.183:80 & got this page, which contains just a post about SSH login :
 
+![image](https://user-images.githubusercontent.com/87700008/210255651-4ea71658-0bf8-495d-a4ba-3a07a4e7e68e.png)
+
+In the post it's mentioned that "Connecting to this machine Use the developer account to SSH, DevOps will give you the password."
+
+I ran the go buster against the web server but didn't get any useful subdirectory.
+
+        gobuster dir -u http://10.10.11.183 -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o amb_web -b 404,403 -k
+        
+![image](https://user-images.githubusercontent.com/87700008/210258728-0c2c07f2-5aba-43ef-b56b-19d88848776c.png)
+
+On the image sub-directory "http://10.10.11.183/images/" there is 1 image present, so I downloaded it check for the metadata but didn't get any useful info.
+
+![image](https://user-images.githubusercontent.com/87700008/210258905-657f1612-191e-43be-ae4c-74f9e2fddd60.png)
+
+        File Name                       : gohugo-default-sample-hero-image.jpg
+        Directory                       : .
+        File Size                       : 283 kB
+        File Modification Date/Time     : 2023:01:02 11:13:31-05:00
+        File Access Date/Time           : 2023:01:02 11:13:30-05:00
+        File Inode Change Date/Time     : 2023:01:02 11:13:31-05:00
+        File Permissions                : -rw-r--r--
+        File Type                       : JPEG
+        File Type Extension             : jpg
+        MIME Type                       : image/jpeg
+        JFIF Version                    : 1.01
+        Exif Byte Order                 : Big-endian (Motorola, MM)
+        X Resolution                    : 72
+        Y Resolution                    : 72
+        Resolution Unit                 : inches
+        Exif Image Width                : 4484
+        Exif Image Height               : 2000
+        Focal Plane X Resolution        : 72
+        Focal Plane Y Resolution        : 72
+        Focal Plane Resolution Unit     : None
+        Lens Model                      : 
+        XMP Toolkit                     : XMP Core 5.5.0
+        Lens                            : 
+        IPTC Digest                     : d41d8cd98f00b204e9800998ecf8427e
+        Profile CMM Type                : Little CMS
+        Profile Version                 : 2.1.0
+        Profile Class                   : Display Device Profile
+        Color Space Data                : RGB
+        Profile Connection Space        : XYZ
+        Profile Date Time               : 2012:01:25 03:41:57
+        Profile File Signature          : acsp
+        Primary Platform                : Apple Computer Inc.
+        CMM Flags                       : Not Embedded, Independent
+        Device Manufacturer             : 
+        Device Model                    : 
+        Device Attributes               : Reflective, Glossy, Positive, Color
+        Rendering Intent                : Perceptual
+        Connection Space Illuminant     : 0.9642 1 0.82491
+        Profile Creator                 : Little CMS
+        Profile ID                      : 0
+        Profile Description             : c2
+        Profile Copyright               : IX
+        Media White Point               : 0.9642 1 0.82491
+        Media Black Point               : 0.01205 0.0125 0.01031
+        Red Matrix Column               : 0.43607 0.22249 0.01392
+        Green Matrix Column             : 0.38515 0.71687 0.09708
+        Blue Matrix Column              : 0.14307 0.06061 0.7141
+        Red Tone Reproduction Curve     : (Binary data 64 bytes, use -b option to extract)
+        Green Tone Reproduction Curve   : (Binary data 64 bytes, use -b option to extract)
+        Blue Tone Reproduction Curve    : (Binary data 64 bytes, use -b option to extract)
+        Comment                         : Optimized by JPEGmini 3.13.3.8 0xff602a7c
+        Image Width                     : 1440
+        Image Height                    : 642
+        Encoding Process                : Baseline DCT, Huffman coding
+        Bits Per Sample                 : 8
+        Color Components                : 3
+        Y Cb Cr Sub Sampling            : YCbCr4:4:4 (1 1)
+        Image Size                      : 1440x642
+        Megapixels                      : 0.924
+        
 
