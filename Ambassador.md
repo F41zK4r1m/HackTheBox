@@ -220,4 +220,8 @@ Using the admin & password I logged into the portal.
 
 ![image](https://user-images.githubusercontent.com/87700008/210268405-28f8b710-4ff4-40e6-ae43-857fec6a7945.png)
 
+I searched in page to exploit some plugins but no luck here. 😕
+Then I moved back & checked the Grafana DB which I extracted earlier. In the DB, in one of the schema named 'data_source' I found password for the user grafana.
+
+![image](https://user-images.githubusercontent.com/87700008/210271015-ada30fd1-a7f3-4cde-ab52-cf0f34fca7ec.png)
 
