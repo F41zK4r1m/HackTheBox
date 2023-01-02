@@ -183,4 +183,41 @@ On the image sub-directory "http://10.10.11.183/images/" there is 1 image presen
         Image Size                      : 1440x642
         Megapixels                      : 0.924
         
+I then moved on to port 3000 which is also running a webserver with Grafana v8.2 & got a login page:
+
+![image](https://user-images.githubusercontent.com/87700008/210262162-0197083d-edf9-464e-8dcc-bc846cac8263.png)
+
+I tried the Grafana default credential but it didn't worked.
+
+I quickly searched for the exploit & found that this version of Grafana is vulnerable to "Directory Traversal and Arbitrary File Read".
+So I fired up my burp & started intercepting the request. And landed onto this page for the POC, ref : https://exploit-notes.hdks.org/exploit/grafana-pentesting/#default-credential
+
+![image](https://user-images.githubusercontent.com/87700008/210263745-370097b7-c453-4be6-827f-38611669217e.png)
+
+I supplied the payload from the blog to read the '/etc/passwd' directory & it worked.
+
+        /public/plugins/alertlist/../../../../../../../../etc/passwd
+        
+![image](https://user-images.githubusercontent.com/87700008/210263915-7bf620ec-1285-4c09-96a4-54132f4e8eb8.png)
+
+Next, I supplied below payload & got the data of Grafana configuration file :
+
+        /public/plugins/alertlist/../../../../../../../../etc/grafana/grafana.ini
+        
+![image](https://user-images.githubusercontent.com/87700008/210264473-a5e89831-016d-4ae1-9576-bbda60210551.png)
+
+Next, I got hold on the Grafana DB :
+
+        /public/plugins/alertlist/../../../../../../../../var/lib/grafana/grafana.db
+        
+![image](https://user-images.githubusercontent.com/87700008/210264641-4c1c16aa-e8fd-4b33-bd04-9bfe5b7cbb5b.png)
+
+Then after extracting all the sensitive files I dived into the Grafana configuration first & got the admin password in it.
+
+![image](https://user-images.githubusercontent.com/87700008/210265773-cac0f219-d69a-4b3e-a99b-3f478ac3a599.png)
+
+Using the admin & password I logged into the portal.
+
+![image](https://user-images.githubusercontent.com/87700008/210268405-28f8b710-4ff4-40e6-ae43-857fec6a7945.png)
+
 
