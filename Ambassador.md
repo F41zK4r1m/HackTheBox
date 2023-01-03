@@ -221,7 +221,58 @@ Using the admin & password I logged into the portal.
 ![image](https://user-images.githubusercontent.com/87700008/210268405-28f8b710-4ff4-40e6-ae43-857fec6a7945.png)
 
 I searched in page to exploit some plugins but no luck here. 😕
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+**Initial access:**
+
 Then I moved back & checked the Grafana DB which I extracted earlier. In the DB, in one of the schema named 'data_source' I found password for the user grafana.
 
 ![image](https://user-images.githubusercontent.com/87700008/210271015-ada30fd1-a7f3-4cde-ab52-cf0f34fca7ec.png)
+
+I used that credentials to login with SSH but no luck here as well. 😕
+
+I then tried the credentials to login into mysql server as the port 3306 is open & mysql is running. 
+
+        mysql -u grafana -p'dontStandSoCloseToMe63221!' -h 10.10.11.183 -P 3306
+
+Logged in successfully & found that there is a database present 'whackywidget' which contains developer credentials.
+
+![image](https://user-images.githubusercontent.com/87700008/210395611-66e69654-251c-40f2-8626-3bcdf4c59667.png)
+
+By looking at the credentials it seems like it's encoded in base64 format so I decoded it & tried to login with the credentials via ssh.
+And this time I logged in successfully & got the user flag (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/210396577-2be7e97c-aff7-4f7f-9c9d-0cdf5f593880.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+**Root access:**
+
+As ususal for the priv esc I started checking :
+ 
+ - sudo privlege (no access to run as sudo)
+ - suid binaried (non of the binary look helpful)
+ - crontab (didn't found any scheduled job)
+ - running processes (didn't found any of the process that will help in priv esc)
+ - Finally ran 'linpeas' but didn't got any potentiatl binary/file to escalate my privlege.
+
+I then found a 2 directories present in the '/opt' directory :
+
+- consul
+- my-app
+
+I checked the 'consul' folder but didn't found anything intresting then I checked 'my-app' folder in this folder I found '.git' folder.
+I checked the log of that git folder & found 'consul.sh' is getting configured.
+
+![image](https://user-images.githubusercontent.com/87700008/210413170-7b34c1f1-770f-43f4-b69b-1d31bedcfbd7.png)
+
+So, it is an open-source service networking platform developed by HashiCorp & default port is 8500. I was checking for exploiting this binary & found this on github : https://github.com/GatoGamer1155/Hashicorp-Consul-RCE-via-API.git
+
+I used that python exploit & started the reverse shell in my attack box. After running the exploit I received the root shell & got the root flag.(pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/210419493-a3d594d8-e9d6-4780-a86f-a778baea2b2f.png)
+![image](https://user-images.githubusercontent.com/87700008/210419560-e1849841-38fb-4025-a7fd-ba4fec9d15e8.png)
+
+
 
