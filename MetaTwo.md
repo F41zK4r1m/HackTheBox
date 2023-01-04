@@ -2,9 +2,9 @@ https://app.hackthebox.com/machines/MetaTwo
 
 ![image](https://user-images.githubusercontent.com/87700008/204091344-de25ad85-8c3c-4687-b735-c111131c05f4.png)
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Enumeration**
+# **Enumeration**
 
-Port scan :
+#### Port scan :
 
 Starting with a quick Rustscan :
 
@@ -46,7 +46,7 @@ Also, from the sub-domain enumeration I observed that the '/events' page is runn
 
 ![image](https://user-images.githubusercontent.com/87700008/204258930-75c1dda3-c3d8-4c98-9de4-9eef2503de49.png)
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Initial foothold:**
+## **Initial foothold:**
 
 As checked for the exploit for this plugin & version found this content which describes an un-authicated SQLi, ref : https://wpscan.com/vulnerability/388cd42d-b61a-42a4-8604-99b812db2357
 
@@ -114,7 +114,7 @@ As we have dumped both the DB we can search for some sensitive data & in the blo
         
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Hash cracking:**
+#### **Hash cracking:**
 
 Got 2 users hash & id in that table, they are 'admin' & 'manager' :
 
@@ -145,7 +145,7 @@ After searching for hours I again checked for my WPscan results & found this exi
 ![image](https://user-images.githubusercontent.com/87700008/204597729-ccce349d-ccb6-419e-bbc6-7b83d7b51f35.png)
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Wordpress exploitation:**
+## **Wordpress exploitation:**
 
 Also, found a room in THM with detailed explanation & exploit for the vulnerability, ref : https://tryhackme.com/room/wordpresscve202129447
 Followed the steps for the exploit with creating the first file: payload.wav, which contains this payload :
@@ -192,7 +192,7 @@ Mailer directory conrtains some php script 'send_email.php', downloaded the scri
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**User flag :**
+##### **User flag :**
 
 Using gathered credentials trying to log in via ssh & successfully logged in this time. (pwned!🙂)
 
@@ -200,7 +200,7 @@ Using gathered credentials trying to log in via ssh & successfully logged in thi
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Root access:**
+## **Root access:**
 
 As visible in the user folder found there is a folder called 'passpie' which contains root user ssh keys but seems like it's in gpg encrypted form:
 
