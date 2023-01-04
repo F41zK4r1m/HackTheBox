@@ -2,7 +2,7 @@
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Port scan:**
+#### **Port scan:**
 
 Started with the quck rustscan for port scanning & found 4 open ports :
 
@@ -224,7 +224,7 @@ I searched in page to exploit some plugins but no luck here. 😕
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Initial access:**
+## **Initial access:**
 
 Then I moved back & checked the Grafana DB which I extracted earlier. In the DB, in one of the schema named 'data_source' I found password for the user grafana.
 
@@ -247,7 +247,7 @@ And this time I logged in successfully & got the user flag (pwn3d!🙂)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Root access:**
+## **Root access:**
 
 As ususal for the priv esc I started checking :
  
@@ -266,6 +266,10 @@ I checked the 'consul' folder but didn't found anything intresting then I checke
 I checked the log of that git folder & found 'consul.sh' is getting configured.
 
 ![image](https://user-images.githubusercontent.com/87700008/210413170-7b34c1f1-770f-43f4-b69b-1d31bedcfbd7.png)
+
+While checking the last commint info I observed some token with which consul is configured:
+
+![image](https://user-images.githubusercontent.com/87700008/210596830-4443283d-e3f0-491b-b82e-702cdf0195d2.png)
 
 So, it is an open-source service networking platform developed by HashiCorp & default port is 8500. I was checking for exploiting this binary & found this on github : https://github.com/GatoGamer1155/Hashicorp-Consul-RCE-via-API.git
 
