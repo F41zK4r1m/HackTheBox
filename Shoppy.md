@@ -3,7 +3,7 @@ https://www.hackthebox.com/machines/Shoppy
 ![image](https://user-images.githubusercontent.com/87700008/198865004-e1a8790d-9a9a-4688-b76a-5f42aba9d457.png)
 
 
-**Initia Recon:**
+## **Initia Recon:**
 
 Ran the scan using the Rust :
 
@@ -27,7 +27,7 @@ Here I found 1 vhost, i.e. : mattermost.shoppy.htb
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Exploitation:**
+## **Exploitation:**
 
 Now I have 2 URL's to login,
 
@@ -55,7 +55,7 @@ Where I tried the same parameter : admin'||'1=1, I got a Download export option.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Cracking hash!**
+## **Cracking hash!**
 
 We can use hashcat or the crackstation to crack the gathered hashes of 'josh' & 'Admin' :
 Josh : 6ebcea65320589ca4f2f1ce039975995
@@ -67,7 +67,7 @@ But not able to crack the Admin hash.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**User access:**
+## **User access:**
 
 Now as we have the password of josh we can try the SSH login & the mattermost.shoppy.htb login
 
@@ -91,7 +91,7 @@ And, now after using this credential we now successfully logged into the SSH
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Root access**
+## **Root access**
 
 Did some manual recon & executed sudo -l & found this :
 
