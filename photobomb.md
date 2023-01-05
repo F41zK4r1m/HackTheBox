@@ -4,7 +4,7 @@ https://www.hackthebox.com/machines/Photobomb
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-**Enumeration**
+## **Enumeration**
 
 Initial scan showed 2 open ports, 22 & 80 :
 ![image](https://user-images.githubusercontent.com/87700008/198865984-222bf4f4-2122-4a32-9f8a-b1fc174847af.png)
@@ -60,7 +60,7 @@ For all of the subdomains found the same html source page.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-**Initial access**
+## **Initial access**
 
 Fired the burp & checked for the responses in it. While checking for the requests checked for the download option from the page & it seems like the 'file-type' parameter is vulnerable to the command-injection.
 
@@ -76,7 +76,7 @@ And got the user flage in the 'wizard user' folder.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-**Privlege escalation**
+## **Privlege escalation**
 
 Nowm we can check for the sudo permissions using 'sudo -l' :
 
