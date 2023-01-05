@@ -2,7 +2,7 @@
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Enumeration:**
+## **Enumeration:**
 
 I started with quick rustscan, which gave me 3 open ports :
 
@@ -58,7 +58,7 @@ But both the exploit needs an authenticated user for the successfull exploit. So
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Initial access :**
+## **Initial access :**
 
 Then I tried the default credentials for the file manager, i.e. 'admin' : 'admin@123' & it worked.🙂
 
@@ -198,7 +198,7 @@ I then logged in with the new password via SSH & got the user flag. (pwn3d!🙂)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Priv Esc** :
+## **Priv Esc** :
       
 I started with the manual enumeration & check the permissions to run SUID binaries, I got an un-usual file in the list 'doas' :
 
