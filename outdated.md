@@ -1,8 +1,8 @@
 ![image](https://user-images.githubusercontent.com/87700008/208471850-0dddee32-e47e-4f13-a15e-f8a26ce60f06.png)
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Enumeration:**
+## **Enumeration:**
 
-Port scan :
+#### Port scan :
 
 Started with a quck rustscan:
 
@@ -203,7 +203,7 @@ Found 3 domians in the nmap scan & added all of them to the /etc/hosts config fi
     - DC.outdated.htb 
     - mail.outdated.htb
 
-**Dns**:
+#### **Dns**:
 
 Digged into the DNS info for the domain & got another new domain in the DNS, added this new host into the host config :
 
@@ -265,7 +265,7 @@ With the gathered credentials I tried to gather some hashes via using AS-REP roa
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Initial access:**
+## **Initial access:**
 
 As I tried all the possible ways but didn't get the success now it's time to go with the hint provided in that PDF file. As per the list of vulnerabilities we will try to exploit MSDT exploit CVE-2022-30190 (follina). Also, from port scan I found port 25 open & running a SMTP server & from the pdf "please assist our NOC by e-mailing a link to any internal web applications to
 itsupport@outdated.htb so we can get them added back into our monitoring platform for alerts and notifications" it seems like we can exploit this follina vulnerabiliy.
@@ -318,7 +318,7 @@ Then using swaks I again send the e-mail to the server pointing to the "/exploit
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**User flag:**
+## **User flag:**
 
 When checked into the desktop of the current user, didn't found the user flag in it. Also, checked the other folders as well but didn't got the flag anywhere as well. 😕
 
@@ -445,7 +445,7 @@ Used that gathered NTLM hash to log-in via evil-winrm & logged-in successfully a
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-**Privlege escalation:**
+## **Privlege escalation:**
 
 I started with running the net user command to check the groups associated with the user & found a group called "WSUS Administrators" in local group membership.
 
