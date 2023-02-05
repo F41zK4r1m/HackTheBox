@@ -28,4 +28,10 @@ Ran GoBuster for the subdomain enumeration but didn't found anything helpful.
 
 ![image](https://user-images.githubusercontent.com/87700008/216770773-3772af77-1945-4fe4-bfff-493267e80d51.png)
 
-Then moved ahead to the vhost enumeration using GoBuster
+Then moved ahead to the vhost enumeration using GoBuster but didn't got any of the result as well.😕
+
+After failed to find any intitial access vector in the website & the subdomain enumeration I thought of finally giving a try with "FFUF" for vhsot enumeration & subdomain enumeration & I finally got a new vhost from the scanning result.
+
+        dev.stocker.htb
+            
+ ![image](https://user-images.githubusercontent.com/87700008/216813569-d2c5b89e-1577-4c23-9cff-ece3ae42c589.png)
