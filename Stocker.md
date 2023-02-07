@@ -20,7 +20,7 @@ After scan I only found 2 open ports, i.e. :
 
 Also, found a re-direction towards the domain : http://stocker.htb, added this redirection to the /etc/hosts file.
 
-After adding browsed through the website & a regular website which is still under developement.
+After adding browsed through the website & found a regular website which is still under developement.
 
 ![image](https://user-images.githubusercontent.com/87700008/216768868-8f1e54cd-770a-453e-b219-499d2a486f41.png)
 
@@ -71,7 +71,7 @@ Which means that the PDF is working dynamically, so I took some help from the hi
 
 Next, I moved on with the steps for the exploitation & added the payload in the title section :
 
-        **<iframe src=file:///etc/passwd height=1000px width=1000px></iframe>**
+        <iframe src=file:///etc/passwd height=1000px width=1000px></iframe>
         
 ![image](https://user-images.githubusercontent.com/87700008/217281015-0c045b19-bfa2-4495-a70a-bacffb20825c.png)
 
@@ -82,7 +82,7 @@ After intercepting the request & changing the parameter I got the list of passwd
 Now, as the website is using Node.js we can fetch the index.js file & check the configuration file for some sensitive info.
 For fetching index.js I used this payload :
 
-        **<iframe src=file:///var/www/dev/index.js height=1000px width=1000px></iframe>**
+        <iframe src=file:///var/www/dev/index.js height=1000px width=1000px></iframe>
 
  In the configuration file I got the password :
  
@@ -100,7 +100,7 @@ I tried the gathered credentials with the "angoose" account & successfully logge
 ## Priv Esc : 
 
 For the privilege escalation I always start with the manual enumeration for the possible vectors & after that I prefer the Linpeas or other script.
-I started checking with the usdo permissions & I got this :
+I started checking with the sudo permissions & I got this :
 
 ![image](https://user-images.githubusercontent.com/87700008/217294933-d461169b-4ffe-4aff-aa5a-5cde5d65ff5d.png)
 
@@ -110,7 +110,7 @@ I can run sudo command using node :
         
 I checked on the internet I found this [blog](https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/sudo/sudo-path-traversal-privilege-escalation/) which is exaclty matching as my condition, the wild card in the path will lead us to the sudo user.
 
-The blogs is pretty straight forward & quick process for the root access.
+The blog is pretty straight forward & quick process for the root access.
 
 I created a "test.js" file in the temp directory, which contains this code that will spawn a root shell :
 
