@@ -69,3 +69,56 @@ I observed from the proxy requests that the order ID which is appeared in the bu
 
 Which means that the PDF is working dynamically, so I took some help from the hint & found an exploit related to [Dynamic PDF](https://book.hacktricks.xyz/pentesting-web/xss-cross-site-scripting/server-side-xss-dynamic-pd).
 
+Next, I moved on with the steps for the exploitation & added the payload in the title section :
+
+        **<iframe src=file:///etc/passwd height=1000px width=1000px></iframe>**
+        
+![image](https://user-images.githubusercontent.com/87700008/217281015-0c045b19-bfa2-4495-a70a-bacffb20825c.png)
+
+After intercepting the request & changing the parameter I got the list of passwd files in the Dynamic PDF. We can see that there is a user present in the list : "angoose"
+
+![image](https://user-images.githubusercontent.com/87700008/217284629-1f9b320b-96fa-4188-af3f-81b883427403.png)
+
+Now, as the website is using Node.js we can fetch the index.js file & check the configuration file for some sensitive info.
+For fetching index.js I used this payload :
+
+        **<iframe src=file:///var/www/dev/index.js height=1000px width=1000px></iframe>**
+
+ In the configuration file I got the password :
+ 
+ ![image](https://user-images.githubusercontent.com/87700008/217287011-eb3eea93-18f6-4ed8-bb92-413403b69a8b.png)
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## User Flag :
+
+I tried the gathered credentials with the "angoose" account & successfully logged in via SSH, where I got my user flag. (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/217288193-3eb8caad-d7ab-405f-a908-258a77dfb73b.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Priv Esc : 
+
+For the privilege escalation I always start with the manual enumeration for the possible vectors & after that I prefer the Linpeas or other script.
+I started checking with the usdo permissions & I got this :
+
+![image](https://user-images.githubusercontent.com/87700008/217294933-d461169b-4ffe-4aff-aa5a-5cde5d65ff5d.png)
+
+I can run sudo command using node :
+
+        /usr/bin/node /usr/local/scripts/*.js
+        
+I checked on the internet I found this [blog](https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/sudo/sudo-path-traversal-privilege-escalation/) which is exaclty matching as my condition, the wild card in the path will lead us to the sudo user.
+
+The blogs is pretty straight forward & quick process for the root access.
+
+I created a "test.js" file in the temp directory, which contains this code that will spawn a root shell :
+
+        require("child_process").spawn("/bin/sh", {stdio: [0, 1, 2]})
+
+Then I ran the node with the sudo user but because it's using the wildcard in the path I ran my "test.js" script, which gave me the root shell. (pwn3d!🙂)
+
+        sudo /usr/bin/node /usr/local/scripts/../../../tmp/test.js
+
+![image](https://user-images.githubusercontent.com/87700008/217297043-c4aade57-f8fa-488a-af21-2a2627cb2e12.png)
+
