@@ -75,4 +75,9 @@ I transferred this file into my machine & checked it's content online as I don't
 
 ![image](https://user-images.githubusercontent.com/87700008/221429231-eb81053e-d8f8-477c-ae45-a8f9a62f317e.png)
 
-I downloaded the e-mail attachment in my machine as well.
+I downloaded the e-mail attachment in my machine as well. After unzipping the attachment I got another file '**security.evtx**' which is a Windows log event file.
+
+![image](https://user-images.githubusercontent.com/87700008/221603664-b818713d-4b2a-4bac-be23-68e844f47e96.png)
+
+I tried to read it's content but it's not in the humand readable format so then I used a script from this [GitHub repo](https://github.com/williballenthin/python-evtx/blob/master/scripts/evtx_dump.py) to dump the file in the humand readable format.
+
