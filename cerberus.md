@@ -190,3 +190,16 @@ HTTPConnectionPool(host='127.0.0.1', port=8080): Read timed out. (read timeout=2
 
 ![image](https://user-images.githubusercontent.com/87700008/226912820-11952123-32c6-4115-8490-7bf5b72fd697.png)
 
+### User.txt:
+
+Now, I am inside the machine with active & stable reverse shell but I don't have access for the Matthews folder. Also, when I checked the machine IP I observed that it's starting from 172.16.X.X which in regular cases associated with the docker containers. So, it's clear that right now I am in the container environment.
+
+![image](https://user-images.githubusercontent.com/87700008/226994767-14f91702-bcb3-4132-864a-d5e7dc11d002.png)
+
+I started with the manual enumeration & checked for the SUID binaries on the machine & I observed one unusual binary 'firejail'
+
+```
+find / -type f -perm -u=s 2> /dev/null 
+```
+
+![image](https://user-images.githubusercontent.com/87700008/226995578-4b6c91ef-7772-4307-a5bd-a3c18a15ba7a.png)
