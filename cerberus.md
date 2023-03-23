@@ -190,7 +190,7 @@ HTTPConnectionPool(host='127.0.0.1', port=8080): Read timed out. (read timeout=2
 
 ![image](https://user-images.githubusercontent.com/87700008/226912820-11952123-32c6-4115-8490-7bf5b72fd697.png)
 
-### User.txt:
+### Escaping container:
 
 Now, I am inside the machine with active & stable reverse shell but I don't have access for the Matthews folder. Also, when I checked the machine IP I observed that it's starting from 172.16.X.X which in regular cases associated with the docker containers. So, it's clear that right now I am in the container environment.
 
@@ -203,3 +203,47 @@ find / -type f -perm -u=s 2> /dev/null
 ```
 
 ![image](https://user-images.githubusercontent.com/87700008/226995578-4b6c91ef-7772-4307-a5bd-a3c18a15ba7a.png)
+
+I checked for the available exploits for 'firejail' & found this [blog](https://www.openwall.com/lists/oss-security/2022/06/08/10) with the exploit which we can use this to get to root.
+
+I downloaded the exploit & executed it. I have to spawn another terminal with reverse shell to perform the exploit further :
+
+![image](https://user-images.githubusercontent.com/87700008/227173434-84241dde-9d52-46dd-b1f9-99579a8eddc5.png)
+
+In other terminal I followed the instruction of the firejoin exploit & got the root shell :
+
+![image](https://user-images.githubusercontent.com/87700008/227173752-c4cc01ee-2aa3-4578-8f43-6170843231e7.png)
+
+Now, I am root but the problem here is that I am still in the container & Matthew's directory still not have the user flag.
+
+![image](https://user-images.githubusercontent.com/87700008/227174119-ce002e87-412d-42d6-9f3a-74dde6a824f3.png)
+
+At the time of /etc/hosts enumeration I already observed that this device is joined with AD, so I searched on internet if it the Linux devices stores any credentials on the devices for authentication purpose & I found this [Red hat blog](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/sssd-introduction).
+
+In this blog it's clearly mentioned that :
+
+```
+13.2. Using and Caching Credentials with SSSD
+
+The System Security Services Daemon (SSSD) provides access to different identity and authentication providers.
+
+13.2.1. About SSSD
+
+Most system authentication is configured locally, which means that services must check with a local user store to determine users and credentials. What SSSD does is allow a local service to check with a local cache in SSSD, but that cache may be taken from any variety of remote identity providers — an LDAP directory, an Identity Management domain, Active Directory, possibly even a Kerberos realm.
+SSSD also caches those users and credentials, so if the local system or the identity provider go offline, the user credentials are still available to services to verify.
+```
+
+I serached for the file related to "sssd" & got many option, after performing some deeper analysis I found 1 directory among all these results, i.e. : "/var/lib/sss/db/" which contains the cached credentials.
+
+![image](https://user-images.githubusercontent.com/87700008/227177805-0c1b36ac-e532-46cb-a7fb-615898f063ad.png)
+
+I checked the cached credentials with the strings command & found the sha512crypt hash in it, which looks like it belongs to Matthew.
+
+![image](https://user-images.githubusercontent.com/87700008/227178326-2d74583f-6a39-489b-a030-29c3db034868.png)
+
+I used hashcat to crack the hash & fetch clear text password.
+
+![image](https://user-images.githubusercontent.com/87700008/227181330-c5782ef0-b8ed-4c59-a729-69365dacb266.png)
+
+
+
