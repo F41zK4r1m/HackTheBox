@@ -245,5 +245,7 @@ I used hashcat to crack the hash & fetch clear text password.
 
 ![image](https://user-images.githubusercontent.com/87700008/227181330-c5782ef0-b8ed-4c59-a729-69365dacb266.png)
 
+Now, I have the password for Matthew as well. At this point I uploaded a nmap binary I scanned for the top 10000 ports for the DC machine from inside the Linux machine
+After the completing of port scan I got port 5985 open, which is used for powershell remote logon.
 
-
+![image](https://user-images.githubusercontent.com/87700008/227236303-e33da113-486b-40f4-afd9-b83b085f79b1.png)
