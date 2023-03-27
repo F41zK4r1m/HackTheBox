@@ -8,11 +8,11 @@ https://app.hackthebox.com/machines/534
 
 ### Port scanning:
 
-Started with a quick rustscan :
+To begin with, I ran a quick rustscan using the following command:
 
     sudo rustscan -a 10.10.11.205 -- -sC -sV -T4 -vv -oN cerberus_nmap
     
-After scanning I found only 1 open port '8080'.
+Upon completion of the scan, only one open port was discovered - '8080'.
 
 ```
 PORT     STATE SERVICE REASON         VERSION
@@ -24,10 +24,9 @@ PORT     STATE SERVICE REASON         VERSION
 |_http-title: Did not follow redirect to http://icinga.cerberus.local:8080/icingaweb2
 ```
 
-In the port scan results I found a domain, running on port 8080 : "icinga.cerberus.local:8080". So I added the domain to /etc/hosts file.
+Further analysis of the port scan results revealed a domain running on port 8080: "icinga.cerberus.local:8080". To ensure access to the domain, I added it to the /etc/hosts file.
 
-Next I tried UDP scanning on the box to collect some for info & I found 3 more open ports : 53, 88, 123.
-
+In order to collect more information, I proceeded to perform a UDP scan on the system, which revealed three additional open ports: 53, 88, and 123.
 ```
 Nmap scan report for icinga.cerberus.local (10.10.11.205)
 Host is up, received echo-reply ttl 127 (0.17s latency).
@@ -54,26 +53,29 @@ Host script results:
 |_clock-skew: 13s
 ```
 
-### Sub-domain/directory enum:
+### Sub-domain/directory enumeration:
 
-After checking the results of port scanning I moved onto the sub directory enumeration & searched for any vulnerable sub directory/services but didn't found any as almost all of the services required authentication :
+After reviewing the results of the port scan, I moved on to sub-directory enumeration in search of any vulnerable services. However, I was unable to identify any such services as almost all of them required authentication.
+
+To perform the sub-directory enumeration, I used the following command:
 
     gobuster dir -u http://icinga.cerberus.local:8080/icingaweb2 -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o cer_web -b 404,403 -k
     
+The command's output is shown in the image below:
+    
 ![image](https://user-images.githubusercontent.com/87700008/226830002-a94919c5-1bc7-4abe-8486-8071708b35c4.png)
 
-I then started checking the website & the services running on it. I checked what is Icinga & found that : "_Icinga is a monitoring system which checks the availability of your network resources, notifies users of outages, and generates performance data for reporting._"
+I proceeded to investigate the website and services running on it. In doing so, I discovered that "_Icinga is a monitoring system designed to check the availability of network resources, notify users of outages, and generate performance data for reporting purposes._"
 
 ![image](https://user-images.githubusercontent.com/87700008/226831317-9aea70a7-ea04-40ca-b1db-56a544a3cf79.png)
 
-I tried for default credentials but that didn't worked, I checked HTML source code & found one JavaScript file in it but that is also not leaking any info.
+Despite attempting default credentials, I was unable to gain access. I also reviewed the HTML source code but found no additional information.
 
-Then I searched for the potential exploits available for Icinga & found this [blog](https://www.sonarsource.com/blog/path-traversal-vulnerabilities-in-icinga-web).
-The blog explains Path Traversal vulnerability (CVE-2022-24716) that can be abused to disclose any file on the server. It can be exploited without authentication and without prior knowledge of a user account.
+During my research, I came across a blog post that detailed a Path Traversal vulnerability (CVE-2022-24716) in Icinga. This vulnerability can be exploited to disclose any file on the server and can be done so without authentication and without prior knowledge of a user account. For more information, please refer to the following [blog post](https://www.sonarsource.com/blog/path-traversal-vulnerabilities-in-icinga-web).
 
 ### Initial access:
 
-I followed the blog & checked whether the website is vulnerable or not. So I used the below command with curl to check for response & received the response with hosts info :
+I followed the blog and used the curl command below to check whether the website was vulnerable:
 
     curl http://icinga.cerberus.local:8080/icingaweb2/lib/icinga/icinga-php-thirdparty/etc/hosts
     
@@ -90,13 +92,13 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ```
 
-From the hosts results I observed the IP : "172.16.22.1" which is commonly associated with the docker container. So, it seems like the box is running the docker inside it, We can note that 172.16.22.1 is hosting the DC.
+The response included hosts info, which showed the IP address "172.16.22.1," commonly associated with Docker containers. This indicated that the box might be running Docker inside it, with 172.16.22.1 hosting the DC.
 
-Then checked for the /etc/passwd file & found 1 user in it "matthew" :
+Next, I checked the "/etc/passwd" file and found only one user in it named "matthew."
 
 ![image](https://user-images.githubusercontent.com/87700008/226844706-2ec364eb-b0cc-4b81-ac16-869c49349beb.png)
 
-Next I checked for the Icings web [documentation](https://icinga.com/docs/icinga-web/latest/) & checked for more configuration & authentication related files :
+I then looked for more configuration and authentication-related files on the Icinga web portal by consulting its [documentation](https://icinga.com/docs/icinga-web/latest/) :
 
 ```
 $ curl http://icinga.cerberus.local:8080/icingaweb2/lib/icinga/icinga-php-thirdparty/etc/icingaweb2/config.ini
@@ -155,17 +157,15 @@ backend = "db"
 resource = "icingaweb2"
 ```
 
-With the gathered credentials of matthew from the resources.ini, I logged into Icinga web portal :
+Using the credentials I found for "matthew" in the "resources.ini" file, I was able to log into the Icinga web portal:
 
 ![image](https://user-images.githubusercontent.com/87700008/226851350-7a63d379-7e88-4981-b988-43c0414f30be.png)
 
-As of now I have logged into the website, I can check more info about it, which I wasn't able to do at the time port sub directory enumertaion. I checked for the /about section & found that the Icinga is running on web version 2.9.2 :
+With access to the website, I could check more information about it that I couldn't access during the port sub-directory enumeration. For example, I found that Icinga was running on web version 2.9.2 by checking the "/about" section:
 
 ![image](https://user-images.githubusercontent.com/87700008/226852899-20d37e43-dd06-4a0a-b3b5-179062e7b19e.png)
 
-Searching for the exploits I observed that the service version is vulnerable to [CVE-2022-24715](https://nvd.nist.gov/vuln/detail/CVE-2022-24715) which affects some unknown processing of the component SSH Resource File Handler & leads to the execution of arbitrary PHP code from the administration interface. 
-
-The best pat is that "matthew" is part of the "Administrators" group which fulfills the need to exploit the vulnerability.
+I then searched for any exploits and found that the service version was vulnerable to [CVE-2022-24715](https://nvd.nist.gov/vuln/detail/CVE-2022-24715), which affects some unknown processing of the component SSH Resource File Handler and leads to the execution of arbitrary PHP code from the administration interface. The good news was that "matthew" belonged to the "Administrators" group, which made exploiting the vulnerability possible.
 
 ### RCE:
 
