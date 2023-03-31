@@ -54,6 +54,7 @@ PORT     STATE SERVICE REASON         VERSION
 1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
 SF-Port5789-TCP:V=7.91%I=7%D=3/27%Time=6421CF7A%P=x86_64-unknown-linux-gnu
 SF:%r(GenericLines,F4,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nDate:\x20Mon,
+
 SF:\x2027\x20Mar\x202023\x2017:16:46\x20GMT\r\nServer:\x20Python/3\.10\x20
 SF:websockets/10\.4\r\nContent-Length:\x2077\r\nContent-Type:\x20text/plai
 SF:n\r\nConnection:\x20close\r\n\r\nFailed\x20to\x20open\x20a\x20WebSocket
@@ -88,3 +89,26 @@ Service Info: Host: qreader.htb; OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
 From port 80 I observed a domain "http://qreader.htb/". I added this domain to /etc/hosts file.
+
+I then moved onto the website & found that it's taking the QR code as Input & showing the embedded text present in the QR.
+
+![image](https://user-images.githubusercontent.com/87700008/229103303-772de251-d144-473b-b6bc-57aac382dba7.png)
+
+I checked for the sub-directories & found 3 open directories in the results :
+
+![image](https://user-images.githubusercontent.com/87700008/229103939-cb6cb1dc-4514-4ed6-9b8e-aa0e7075cadb.png)
+
+Nothing special in the sub-directories as well.
+
+In our port scan result we observed an open port "5789" where WebSocket is open, so to enumerate that web socket I downloaded this [script](https://github.com/PalindromeLabs/STEWS) from GitHub.
+
+    python3 STEWS-vuln-detect.py -1 -n -u 10.10.11.206:5789
+    
+![image](https://user-images.githubusercontent.com/87700008/229136259-3425ae45-de4b-4e02-bb33-35fa50066725.png)
+
+After the scanning we found a vulnerable directory at : "ws://qreader.htb:5789", but it's not much helpful.
+
+In the website there is a download app option available for windows & Linux, so I downloaded the Windows executable from the website.
+
+![image](https://user-images.githubusercontent.com/87700008/229138351-ebfe702d-2b82-4002-a7fa-9ab283497acd.png)
+
