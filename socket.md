@@ -112,3 +112,77 @@ In the website there is a download app option available for windows & Linux, so 
 
 ![image](https://user-images.githubusercontent.com/87700008/229138351-ebfe702d-2b82-4002-a7fa-9ab283497acd.png)
 
+After downloading the binary I decompiled it using [pycdc](https://github.com/zrax/pycdc/) & found this code in it :
+
+```
+import cv2
+import sys
+import qrcode
+import tempfile
+import random
+import os
+from PyQt5.QtWidgets import *
+from PyQt5 import uic, QtGui
+import asyncio
+import websockets
+import json
+VERSION = '0.0.2'
+ws_host = 'ws://ws.qreader.htb:5789'
+icon_path = './icon.png'
+
+def setup_env():
+    global tmp_file_name
+    pass
+# WARNING: Decompyle incomplete
+
+
+class MyGUI(QMainWindow):
+    
+    ...
+    
+    def version(self):
+        response = asyncio.run(ws_connect(ws_host + '/version', json.dumps({
+            'version': VERSION })))
+        data = json.loads(response)
+        if 'error' not in data.keys():
+            version_info = data['message']
+            msg = f'''[INFO] You have version {version_info['version']} which was released on {version_info['released_date']}'''
+            self.statusBar().showMessage(msg)
+            return None
+        error = None['error']
+        self.statusBar().showMessage(error)
+
+    
+    def update(self):
+        response = asyncio.run(ws_connect(ws_host + '/update', json.dumps({
+            'version': VERSION })))
+        data = json.loads(response)
+        if 'error' not in data.keys():
+            msg = '[INFO] ' + data['message']
+            self.statusBar().showMessage(msg)
+            return None
+        error = None['error']
+        self.statusBar().showMessage(error)
+
+    __classcell__ = None
+
+
+async def ws_connect(url, msg):
+    pass
+# WARNING: Decompyle incomplete
+
+
+def main():
+    (status, e) = setup_env()
+    if not status:
+        print('[-] Problem occured while setting up the env!')
+    app = QApplication([])
+    window = MyGUI()
+    app.exec_()
+
+if __name__ == '__main__':
+    main()
+    return None
+```
+
+In the code I found a socket domain "ws.qreader.htb" to connect on & I added it to the hosts file.
