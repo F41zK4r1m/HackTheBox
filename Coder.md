@@ -322,3 +322,12 @@ After the port scanning part I moved onto the sub-directory enumeration & DNS en
 ### SMB Enumeration :
 
 My next step in SMB enumeration, to check the open file share & my access in those shares.
+
+I found 3 shares with Read access : Developement, IPC$, Users
+
+```
+smbmap -u DoesNotExist -H coder.htb  # at -u we can use any random username, which may or may not exist in the domain.
+```
+![image](https://user-images.githubusercontent.com/87700008/229360716-33e73953-c86c-49af-b38f-05d924fe3d3a.png)
+
+
