@@ -331,3 +331,14 @@ smbmap -u DoesNotExist -H coder.htb  # at -u we can use any random username, whi
 ![image](https://user-images.githubusercontent.com/87700008/229360716-33e73953-c86c-49af-b38f-05d924fe3d3a.png)
 
 
+I then used "rid brute force" option from **CrackMapExec** which gave me list of the users & service accounts :
+
+```
+crackmapexec smb coder.htb -u "guest" -p "" --rid-brute
+```
+
+![image](https://user-images.githubusercontent.com/87700008/229478798-cdcd1681-0a8f-4771-b227-abef43f4a776.png)
+
+With the gathered username I tried to perform AS-REP roasting but it seems kerberoas preauthication is enabled for all the users.😕
+
+![image](https://user-images.githubusercontent.com/87700008/229482096-11911a6f-59dc-41e8-a7e3-eb422ec682a6.png)
