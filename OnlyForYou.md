@@ -52,6 +52,10 @@ After few trial & test I finally confirmed the LFI vulnerability in the Image pa
 
 ![image](https://user-images.githubusercontent.com/87700008/234436376-98147449-e97a-4714-a22f-d08c40e43a63.png)
 
-
-
+In the **passwd** file I observed 3 users apart from the root:
+```
+john
+neo4j
+dev
+```
 
