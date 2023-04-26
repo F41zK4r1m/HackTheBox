@@ -30,6 +30,8 @@ After the port scanning I observed a domain running on port 80, i.e. : http://on
 
 I checked website & html source code but didn't found anything useful to get initial access.
 
+### Fuzzing:
+
 After that I scanned for the sub-directories & VHOST enumeration. In the sub-directory enumeration I didn't found anything but in the VHOST enumeration I observed a domain 'beta.only4you.htb'.
 
 ![image](https://user-images.githubusercontent.com/87700008/234087689-bf77eafe-7c74-4c13-a16d-ba5daaf82151.png)
@@ -58,4 +60,100 @@ john
 neo4j
 dev
 ```
+As of now I am aware that the website is running on the Apache Nginx configuration, which I observed in my port scan & wappalyzer. I serched for the default nginx configuration path on google checked for the configuration on this path:
+```
+/etc/nginx/sites-available/default
+```
+![image](https://user-images.githubusercontent.com/87700008/234570849-14881545-8dbf-4e28-8b27-6198b5f7b3fc.png)
 
+In the response I found 2 paths for nginx config of the website:
+```
+- /var/www/beta.only4you.htb/
+- /var/www/only4you.htb/
+```
+
+I tried different parameters multiple times but wasn't able to get any positive respone to move further, then I though may be I should go with checking the source code of the "only4you.htb" domain.
+Since from the beta website I already know the source code was saved in "**app.py**" file, I tried to fetch the same file here as well.
+
+And, finally I got the response. But in this source code file I observed an unusual import '**from form import sendmessage**':
+
+![image](https://user-images.githubusercontent.com/87700008/234573417-4aac54b3-90bf-4387-a2c5-ad75b7f2cd1b.png)
+
+I thought this import "form" must be there in the same directory so I checked that file as well & got the source code of the file:
+
+![image](https://user-images.githubusercontent.com/87700008/234574197-9d33a459-6d83-4bd9-89f3-cc86853c3f38.png)
+
+Here is the source code of the file:
+```
+import smtplib, re
+from email.message import EmailMessage
+from subprocess import PIPE, run
+import ipaddress
+
+def issecure(email, ip):
+	if not re.match("([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})", email):
+		return 0
+	else:
+		domain = email.split("@", 1)[1]
+		result = run([f"dig txt {domain}"], shell=True, stdout=PIPE)
+		output = result.stdout.decode('utf-8')
+		if "v=spf1" not in output:
+			return 1
+		else:
+			domains = []
+			ips = []
+			if "include:" in output:
+				dms = ''.join(re.findall(r"include:.*\.[A-Z|a-z]{2,}", output)).split("include:")
+				dms.pop(0)
+				for domain in dms:
+					domains.append(domain)
+				while True:
+					for domain in domains:
+						result = run([f"dig txt {domain}"], shell=True, stdout=PIPE)
+						output = result.stdout.decode('utf-8')
+						if "include:" in output:
+							dms = ''.join(re.findall(r"include:.*\.[A-Z|a-z]{2,}", output)).split("include:")
+							domains.clear()
+							for domain in dms:
+								domains.append(domain)
+						elif "ip4:" in output:
+							ipaddresses = ''.join(re.findall(r"ip4:+[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+[/]?[0-9]{2}", output)).split("ip4:")
+							ipaddresses.pop(0)
+							for i in ipaddresses:
+								ips.append(i)
+						else:
+							pass
+					break
+			elif "ip4" in output:
+				ipaddresses = ''.join(re.findall(r"ip4:+[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+[/]?[0-9]{2}", output)).split("ip4:")
+				ipaddresses.pop(0)
+				for i in ipaddresses:
+					ips.append(i)
+			else:
+				return 1
+		for i in ips:
+			if ip == i:
+				return 2
+			elif ipaddress.ip_address(ip) in ipaddress.ip_network(i):
+				return 2
+			else:
+				return 1
+
+def sendmessage(email, subject, message, ip):
+	status = issecure(email, ip)
+	if status == 2:
+		msg = EmailMessage()
+		msg['From'] = f'{email}'
+		msg['To'] = 'info@only4you.htb'
+		msg['Subject'] = f'{subject}'
+		msg['Message'] = f'{message}'
+
+		smtp = smtplib.SMTP(host='localhost', port=25)
+		smtp.send_message(msg)
+		smtp.quit()
+		return status
+	elif status == 1:
+		return status
+	else:
+		return status
+```
