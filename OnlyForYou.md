@@ -26,9 +26,32 @@
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-After the port scanning I observed a domain running on port 80, i.e. : http://only4you.htb/. I added the domain to the hosts file & scanned for the sub-directories & VHOST enumeration.
+After the port scanning I observed a domain running on port 80, i.e. : http://only4you.htb/. I added the domain to the hosts file.
 
-In the sub-directory enumeration I didn't found anything but in the VHOST enumeration I observed a domain 'beta.only4you.htb'.
+I checked website & html source code but didn't found anything useful to get initial access.
+
+After that I scanned for the sub-directories & VHOST enumeration. In the sub-directory enumeration I didn't found anything but in the VHOST enumeration I observed a domain 'beta.only4you.htb'.
 
 ![image](https://user-images.githubusercontent.com/87700008/234087689-bf77eafe-7c74-4c13-a16d-ba5daaf82151.png)
+
+The beta website is providing some functionality to resize & convert the images, in the home page of the website I found the source code written in python to perform reszie & conversion.
+
+![image](https://user-images.githubusercontent.com/87700008/234435248-c2ce1fa5-0fff-4caa-bf36-5f53400d94b4.png)
+
+I again ran the sub-directory enumeration for the beta website & found 5 sub-directories:
+![image](https://user-images.githubusercontent.com/87700008/234435295-e8f7400b-4f58-4c92-b8bc-ebcb36958804.png)
+
+At this point, I browsed through the beta website & checked all the fucntions manually, since there is an upload option I thought there might be some vulnerability exist in the upload fucntion.
+
+I started checking the source code & in the "**app.py**" I found this part of the '/download' function vulnerable to LFI, the code checks if the image filename contains the string '..' or starts with '../'. However, it only performs a basic check and doesn't sanitize the user input.
+
+![image](https://user-images.githubusercontent.com/87700008/234435937-271b662e-83ee-4cc2-aae6-f991943217f6.png)
+
+To confirm this, I fired up my burp suite & intercepted the download request after uploading a random image file. 
+After few trial & test I finally confirmed the LFI vulnerability in the Image parameter:
+
+![image](https://user-images.githubusercontent.com/87700008/234436376-98147449-e97a-4714-a22f-d08c40e43a63.png)
+
+
+
 
