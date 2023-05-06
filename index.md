@@ -1,30 +1,30 @@
 ## Easy Boxes:
 
-  - [Inject](https://f41zk4r1m.github.io/HackTheBox/Inject)
-  - [MetaTwo](https://f41zk4r1m.github.io/HackTheBox/MetaTwo)
+  - [Inject](https://f41zk4r1m.github.io/HackTheBox/Inject) 🐧
+  - [MetaTwo](https://f41zk4r1m.github.io/HackTheBox/MetaTwo) 🐧
+  - [Busqueda](https://f41zk4r1m.github.io/HackTheBox/Busqueda) 🐧
   - [MonitorsTwo](https://f41zk4r1m.github.io/HackTheBox/MonitorsTwo)
-  - [Precious](https://f41zk4r1m.github.io/HackTheBox/Precious)
-  - [Shoppy](https://f41zk4r1m.github.io/HackTheBox/Shoppy)
-  - [Stocker](https://f41zk4r1m.github.io/HackTheBox/Stocker)
-  - [photobomb](https://f41zk4r1m.github.io/HackTheBox/photobomb)
-  - [soccer](https://f41zk4r1m.github.io/HackTheBox/soccer)
+  - [Precious](https://f41zk4r1m.github.io/HackTheBox/Precious) 🐧
+  - [Shoppy](https://f41zk4r1m.github.io/HackTheBox/Shoppy) 🐧
+  - [Stocker](https://f41zk4r1m.github.io/HackTheBox/Stocker) 🐧
+  - [photobomb](https://f41zk4r1m.github.io/HackTheBox/photobomb) 🐧
+  - [soccer](https://f41zk4r1m.github.io/HackTheBox/soccer) 🐧
 
 
 
 ## Medium Boxes:
 
-  - [Agile](https://f41zk4r1m.github.io/HackTheBox/Agile)![LinuxGnuGIF](https://user-images.githubusercontent.com/87700008/236645238-c5e077bd-84a6-4237-ac6e-771600a37874.gif)
-  - [Ambassador](https://f41zk4r1m.github.io/HackTheBox/Ambassador)
-  - [Busqueda](https://f41zk4r1m.github.io/HackTheBox/Busqueda)
-  - [Investigation](https://f41zk4r1m.github.io/HackTheBox/Investigation)
-  - [OnlyForYou](https://f41zk4r1m.github.io/HackTheBox/OnlyForYou)
-  - [outdated](https://f41zk4r1m.github.io/HackTheBox/outdated)
-  - [socket](https://f41zk4r1m.github.io/HackTheBox/socket)
+  - [Agile](https://f41zk4r1m.github.io/HackTheBox/Agile) 🐧
+  - [Ambassador](https://f41zk4r1m.github.io/HackTheBox/Ambassador) 🐧
+  - [Investigation](https://f41zk4r1m.github.io/HackTheBox/Investigation) 🐧
+  - [OnlyForYou](https://f41zk4r1m.github.io/HackTheBox/OnlyForYou) 🐧
+  - [outdated](https://f41zk4r1m.github.io/HackTheBox/outdated) 🪟
+  - [socket](https://f41zk4r1m.github.io/HackTheBox/socket) 🐧
 
 ## Hard Boxes:
 
-  - [cerberus](https://f41zk4r1m.github.io/HackTheBox/cerberus) ```Only user flag```
+  - [cerberus](https://f41zk4r1m.github.io/HackTheBox/cerberus) 🪟 ```Only user flag```
 
 ## Insane Boxes:
 
-  - [Coder](https://f41zk4r1m.github.io/HackTheBox/Coder) ```Yet to complete```
+  - [Coder](https://f41zk4r1m.github.io/HackTheBox/Coder) 🪟 ```Yet to complete```
