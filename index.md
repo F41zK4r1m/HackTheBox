@@ -1,4 +1,4 @@
-## Easy:
+## Easy Boxes:
 
   - [Inject](https://f41zk4r1m.github.io/HackTheBox/Inject)
   - [MetaTwo](https://f41zk4r1m.github.io/HackTheBox/MetaTwo)
@@ -11,7 +11,7 @@
 
 
 
-## Medium:
+## Medium Boxes:
 
   - [Agile](https://f41zk4r1m.github.io/HackTheBox/Agile)
   - [Ambassador](https://f41zk4r1m.github.io/HackTheBox/Ambassador)
@@ -21,10 +21,10 @@
   - [outdated](https://f41zk4r1m.github.io/HackTheBox/outdated)
   - [socket](https://f41zk4r1m.github.io/HackTheBox/socket)
 
-## Hard:
+## Hard Boxes:
 
   - [cerberus](https://f41zk4r1m.github.io/HackTheBox/cerberus) ```Only user flag```
 
-## Insane:
+## Insane Boxes:
 
   - [Coder](https://f41zk4r1m.github.io/HackTheBox/Coder) ```Yet to complete```
