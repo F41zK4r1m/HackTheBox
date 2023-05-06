@@ -27,4 +27,4 @@
 
 ##Insane:
 
-  - [Coder](https://f41zk4r1m.github.io/HackTheBox/Coder) ```Yet to complete``
+  - [Coder](https://f41zk4r1m.github.io/HackTheBox/Coder) ```Yet to complete```
