@@ -13,7 +13,7 @@
 
 ## Medium Boxes:
 
-  - [Agile](https://f41zk4r1m.github.io/HackTheBox/Agile)
+  - [Agile](https://f41zk4r1m.github.io/HackTheBox/Agile)![LinuxGnuGIF](https://user-images.githubusercontent.com/87700008/236645238-c5e077bd-84a6-4237-ac6e-771600a37874.gif)
   - [Ambassador](https://f41zk4r1m.github.io/HackTheBox/Ambassador)
   - [Busqueda](https://f41zk4r1m.github.io/HackTheBox/Busqueda)
   - [Investigation](https://f41zk4r1m.github.io/HackTheBox/Investigation)
