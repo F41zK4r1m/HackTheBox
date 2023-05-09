@@ -32,13 +32,24 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 I checked the website & found that on port 80 there is a Cacti service running, which is an open-source, web-based monitoring solution.
 ![image](https://user-images.githubusercontent.com/87700008/237025268-926927c5-8cd0-433a-a233-fa4b02ab9e07.png)
 
-I tried to bypass the authentication using SQLi but didn't succedded, then I scanned for the sub-directories:
+I tried to bypass the authentication using SQLi but didn't succedded, I checked HTML source code of the website but didn't found anything helpful, then I scanned for the sub-directories:
 
 ```
 ffuf -u http://10.10.11.211/FUZZ -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
 ```
 
-In the results I found multiple directories but all of them requires an authentication.
+In the results I found multiple directories but all of them requires authentication.
 
 ![image](https://user-images.githubusercontent.com/87700008/237025773-641cede3-abb7-4528-afca-14eb333c730b.png)
+
+In the webpage I can clearly see the version of cacti is 1.22, so I started searching for the vulnerability. I found out that Cacti 1.22 is vulnerable, CVE-2022-46169 with a CVSS score of 9.8.
+It's vulnerable to RCE. Unauthenticated attackers could exploit a vulnerable Cacti instance if any monitored device uses a specific data source. Exploiting allows attackers to run arbitrary commands under the same user as the web server process is running.
+
+### Initial access:
+
+I found this exploit in this [Github repo](https://github.com/FredBrave/CVE-2022-46169-CACTI-1.2.22), which I downloaded it into my attacking machine.
+After the download I executed the exploit & quickly got the reverse shell in my netcat listener, with the user running as 'www-data'. 🙂
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0490e050-571d-4249-b2d1-a756c22efed3)
+
 
