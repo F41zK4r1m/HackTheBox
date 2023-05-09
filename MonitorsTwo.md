@@ -29,3 +29,16 @@ PORT   STATE SERVICE REASON         VERSION
 |_http-title: Login to Cacti
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
+I checked the website & found that on port 80 there is a Cacti service running, which is an open-source, web-based monitoring solution.
+![image](https://user-images.githubusercontent.com/87700008/237025268-926927c5-8cd0-433a-a233-fa4b02ab9e07.png)
+
+I tried to bypass the authentication using SQLi but didn't succedded, then I scanned for the sub-directories:
+
+```
+ffuf -u http://10.10.11.211/FUZZ -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+```
+
+In the results I found multiple directories but all of them requires an authentication.
+
+![image](https://user-images.githubusercontent.com/87700008/237025773-641cede3-abb7-4528-afca-14eb333c730b.png)
+
