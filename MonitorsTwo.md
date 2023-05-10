@@ -52,4 +52,7 @@ After the download I executed the exploit & quickly got the reverse shell in my 
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0490e050-571d-4249-b2d1-a756c22efed3)
 
+After some enumeration I observed that currently I am in the docker environment:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/96904852-b175-42da-aca1-9b8e5be25539)
 
