@@ -56,3 +56,59 @@ After some enumeration I observed that currently I am in the docker environment:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/96904852-b175-42da-aca1-9b8e5be25539)
 
+In the '/' folder I noticed a file called 'entrypoint.sh' for which I am having the read access. By checking file I found this code:
+
+```
+#!/bin/bash
+set -ex
+
+wait-for-it db:3306 -t 300 -- echo "database is connected"
+if [[ ! $(mysql --host=db --user=root --password=root cacti -e "show tables") =~ "automation_devices" ]]; then
+    mysql --host=db --user=root --password=root cacti < /var/www/html/cacti.sql
+    mysql --host=db --user=root --password=root cacti -e "UPDATE user_auth SET must_change_password='' WHERE username = 'admin'"
+    mysql --host=db --user=root --password=root cacti -e "SET GLOBAL time_zone = 'UTC'"
+fi
+
+chown www-data:www-data -R /var/www/html
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+        set -- apache2-foreground "$@"
+fi
+
+exec "$@"
+```
+
+As per the code I checked the tables in cacti DB with root credentials & found a lot of tables:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9c583bff-30a1-4e3f-9531-64e71b4d7f2f)
+
+I observed 1 interseting table 'user_auth' & fetched the details of that table:
+
+```
+mysql --host=db --user=root --password=root cacti -e "select * from user_auth"
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/de596dd2-62c3-4279-acc7-2b81560e2ace)
+
+In the table I observed 3 users "admin", "guest" & "marcus" with their hashed passwords.
+
+At this point of time I added the "monitorstwo.htb" to the hosts file as the domain is visible in database & checked the hashing algorithm of Marcus as well & it seems like the hash is in bcrypt format:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3deb5d51-24cc-415c-872d-0312955f2c19)
+
+I used HashCat to crack the hash with mode 3200 & in few seconds I got the clear text password :
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/eeeff081-b9bb-4008-b49a-1f1594be765f)
+
+### User.txt:
+
+Now, with the cracked credentials I tried to login via SSH & successfully logged into Marcus account.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/73c26538-b1bf-42f3-9183-7de37832a46c)
+
+Also, got the user flag as well. (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a69a5718-3ba1-40bc-8703-d9291e9238ba)
+
+
+
