@@ -128,5 +128,51 @@ I started checking with the manual enumeration like:
 
 But in all of them I didn't found anythinh helpful as Marcus is not allowed to run the program as sudo, as he is not in the sudoers list. 😕
 
-Then I tarnsferred the Linpeas binary to enumerate further for the privilge escalation
+Then I tarnsferred the Linpeas binary to enumerate further for the privilge escalation.
+After running the Linpeas I found an intresting folder which belongs to Marcus, which contains a mail from security team.
 
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/301db084-cbce-44ff-8aba-40cc24d3e6c8)
+
+In the mail I found 3 vulnerabilities where I observed a vulnerability "CVE-2021-41091":
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/320817d7-9ea6-4d47-abc3-68292492ed41)
+
+```
+CVE-2021-41091, the overly permissive directory permissions in /var/lib/docker/overlay2 enable unprivileged users to access and execute programs within the containers, leading to a potential privilege escalation attack.
+In short we can execute the file from containers into the host machine with the same file permission of the container, which means if we have created any file with root permissions in the container then we can execute the same file with root privileges without having the root access.
+```
+
+For this we have to escalate our privilege in the container environment as well. And for this I again executed Linpeas in the container.
+After running the Linpeas I found "capsh" setuid, which we can use to escalate privilege:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/653b1352-4b4c-4a12-99f0-32c847e9fa68)
+
+I executed the below command as 'www-data' & quickly got the root shell:
+
+```
+capsh --gid=0 --uid=0 --
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c994f6d6-029e-4cb2-a140-daf8027f39de)
+
+After having the root shell in the container I created a root bash in the /tmp folder:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b0806c37-a7fb-4e15-9744-97eb1e5a9e24)
+
+As per the full vulnerability description :
+
+```
+The overlay filesystem is a critical component in exploiting this vulnerability. Docker's overlay filesystem enables the container's file system to be layered on top of the host's file system, thus allowing the host system to access and manipulate the files within the container. In the case of CVE-2021-41091, the overly permissive directory permissions in /var/lib/docker/overlay2 enable unprivileged users to access and execute programs within the containers, leading to a potential privilege escalation attack.
+```
+
+I used 'findmnt' to search for overlay filesystem:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a92c43b3-458c-4152-85dd-584587d011ca)
+
+I then checked if my SUID bash is visible from the host machine or not, which I found visible:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0c9aea7b-cbcc-443d-af85-549c62db54c1)
+
+Executed the 'bash -p' & got the root shell quickly: (pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5decf271-bc1c-4143-b4a4-427376f158f9)
