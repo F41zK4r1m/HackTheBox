@@ -1,6 +1,8 @@
   ![image](https://user-images.githubusercontent.com/87700008/236646161-75eb7f04-736d-40bd-b071-2bfd16e50a42.png)
 https://app.hackthebox.com/machines/539
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ## Enumeration:
 
 Started with rustscan & found 2 open port: 22 & 80
@@ -44,6 +46,8 @@ In the results I found multiple directories but all of them requires authenticat
 
 In the webpage I can clearly see the version of cacti is 1.22, so I started searching for the vulnerability. I found out that Cacti 1.22 is vulnerable, CVE-2022-46169 with a CVSS score of 9.8.
 It's vulnerable to RCE. Unauthenticated attackers could exploit a vulnerable Cacti instance if any monitored device uses a specific data source. Exploiting allows attackers to run arbitrary commands under the same user as the web server process is running.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Initial access:
 
@@ -100,6 +104,8 @@ I used HashCat to crack the hash with mode 3200 & in few seconds I got the clear
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/eeeff081-b9bb-4008-b49a-1f1594be765f)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ### User.txt:
 
 Now, with the cracked credentials I tried to login via SSH & successfully logged into Marcus account.
@@ -110,5 +116,17 @@ Also, got the user flag as well. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a69a5718-3ba1-40bc-8703-d9291e9238ba)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+## Priv Esc:
+
+I started checking with the manual enumeration like:
+
+  - checking sudo privileges
+  - checking cron jobs
+  - checking SUID binaries
+
+But in all of them I didn't found anythinh helpful as Marcus is not allowed to run the program as sudo, as he is not in the sudoers list. 😕
+
+Then I tarnsferred the Linpeas binary to enumerate further for the privilge escalation
 
