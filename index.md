@@ -1,4 +1,4 @@
-#### _You can find my TryHackMe write-ups at : https://f41zk4r1m.github.io/TryHackMe/_
+#### You can find my TryHackMe write-ups at : [https://f41zk4r1m.github.io/TryHackMe](https://f41zk4r1m.github.io/TryHackMe/)
 
 
 
