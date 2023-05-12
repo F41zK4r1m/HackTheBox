@@ -1,9 +1,13 @@
+#### _You can find my TryHackMe write-ups at : https://f41zk4r1m.github.io/TryHackMe/_
+
+
+
 ## Easy Boxes:
 
   - [Inject](https://f41zk4r1m.github.io/HackTheBox/Inject) 🐧
   - [MetaTwo](https://f41zk4r1m.github.io/HackTheBox/MetaTwo) 🐧
   - [Busqueda](https://f41zk4r1m.github.io/HackTheBox/Busqueda) 🐧
-  - [MonitorsTwo](https://f41zk4r1m.github.io/HackTheBox/MonitorsTwo)
+  - [MonitorsTwo](https://f41zk4r1m.github.io/HackTheBox/MonitorsTwo) 🐧
   - [Precious](https://f41zk4r1m.github.io/HackTheBox/Precious) 🐧
   - [Shoppy](https://f41zk4r1m.github.io/HackTheBox/Shoppy) 🐧
   - [Stocker](https://f41zk4r1m.github.io/HackTheBox/Stocker) 🐧
