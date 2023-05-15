@@ -247,3 +247,75 @@ From the port scan results I observed that there is a DC running in the machine,
   - dc.sequel.htb
 
 I also observed that machine is running "Microsoft SQL Server 2019 RTM" as OS.
+
+### DNS enumeration:
+
+I started further enumeration with checking other servers/domain running in the DNS.
+
+```
+dig sequel.htb any @10.10.11.202
+```
+
+```
+; <<>> DiG 9.18.12-1-Debian <<>> sequel.htb any @10.10.11.202
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 57532
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 5, AUTHORITY: 0, ADDITIONAL: 4
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4000
+;; QUESTION SECTION:
+;sequel.htb.                    IN      ANY
+
+;; ANSWER SECTION:
+sequel.htb.             600     IN      A       10.10.11.202
+sequel.htb.             3600    IN      NS      dc.sequel.htb.
+sequel.htb.             3600    IN      SOA     dc.sequel.htb. hostmaster.sequel.htb. 162 900 600 86400 3600
+sequel.htb.             600     IN      AAAA    dead:beef::1dc
+sequel.htb.             600     IN      AAAA    dead:beef::c7c:7944:f15:15eb
+
+;; ADDITIONAL SECTION:
+dc.sequel.htb.          1200    IN      A       10.10.11.202
+dc.sequel.htb.          1200    IN      AAAA    dead:beef::c7c:7944:f15:15eb
+dc.sequel.htb.          1200    IN      AAAA    dead:beef::1dc
+
+;; Query time: 168 msec
+;; SERVER: 10.10.11.202#53(10.10.11.202) (TCP)
+;; WHEN: Mon May 15 02:57:40 EDT 2023
+;; MSG SIZE  rcvd: 247
+```
+
+```
+dig sequel.htb any @10.10.11.202 -t NS
+```
+
+```
+;; Warning, extra type option
+
+; <<>> DiG 9.18.12-1-Debian <<>> sequel.htb any @10.10.11.202 -t NS
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 47171
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 4
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4000
+;; QUESTION SECTION:
+;sequel.htb.                    IN      NS
+
+;; ANSWER SECTION:
+sequel.htb.             3600    IN      NS      dc.sequel.htb.
+
+;; ADDITIONAL SECTION:
+dc.sequel.htb.          3600    IN      A       10.10.11.202
+dc.sequel.htb.          3600    IN      AAAA    dead:beef::c7c:7944:f15:15eb
+dc.sequel.htb.          3600    IN      AAAA    dead:beef::1dc
+
+;; Query time: 164 msec
+;; SERVER: 10.10.11.202#53(10.10.11.202) (TCP)
+;; WHEN: Mon May 15 03:06:41 EDT 2023
+;; MSG SIZE  rcvd: 128
+```
+
+From the DNS enumeration I found another domain in the results : "hostmaster.sequel.htb", which I added to the hosts file.
