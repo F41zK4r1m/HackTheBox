@@ -319,3 +319,45 @@ dc.sequel.htb.          3600    IN      AAAA    dead:beef::1dc
 ```
 
 From the DNS enumeration I found another domain in the results : "hostmaster.sequel.htb", which I added to the hosts file.
+
+
+### SMB enumeration:
+
+After going through the port scan & digging the DNS, I decided to enumerate the network shares.
+
+```
+smbmap -H dc.sequel.htb -u DoesNotExist
+```
+
+I found only 2 network share drive in which I have read access: IPC$ & Public.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b6657364-30d4-4f2a-ad4a-b682d43ba893)
+
+In the public directory I observed a file "SQL Server Procedures.pdf", which I downloaded into my attacking machine.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dc65bd3f-15d4-48ca-950c-17b29975b92e)
+
+In the PDF I got a user "brandon.brown" & Guest credentials to access the SQL data base. Also, the command to access the data base from non-domain joined devices:
+
+```
+cmdkey /add:"<serverName>.sequel.htb" /user:"sequel\<userame>" /pass:<password>
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bba335af-4054-4159-976f-3373c4075573)
+
+### User enumeration with CME:
+
+After checking the network shares it's time to gather the domain user related info, for which I used rid-brute option in CrackMapExec:
+
+```
+crackmapexec smb sequel.htb -u "guest" -p "" --rid-brute
+```
+I got plenty of domains users in the results:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/882f92b2-ee31-4513-a7d6-cc2c825ebdb8)
+
+With the gathered credentials I tried to perform the AS-REP roasting to checking if there is any account that “Do not require Kerberos pre-authentication" but from the results it seems like all the accounts requires pre-authentication. 😕
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/86abd543-ff8b-4d01-ae17-6df0d9c339dc)
+
+
