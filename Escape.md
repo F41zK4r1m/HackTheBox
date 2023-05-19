@@ -248,6 +248,8 @@ From the port scan results I observed that there is a DC running in the machine,
 
 I also observed that machine is running "Microsoft SQL Server 2019 RTM" as OS.
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ### DNS enumeration:
 
 I started further enumeration with checking other servers/domain running in the DNS.
@@ -320,6 +322,7 @@ dc.sequel.htb.          3600    IN      AAAA    dead:beef::1dc
 
 From the DNS enumeration I found another domain in the results : "hostmaster.sequel.htb", which I added to the hosts file.
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### SMB enumeration:
 
@@ -345,6 +348,8 @@ cmdkey /add:"<serverName>.sequel.htb" /user:"sequel\<userame>" /pass:<password>
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bba335af-4054-4159-976f-3373c4075573)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ### User enumeration with CME:
 
 After checking the network shares it's time to gather the domain user related info, for which I used rid-brute option in CrackMapExec:
@@ -359,6 +364,8 @@ I got plenty of domains users in the results:
 With the gathered credentials I tried to perform the AS-REP roasting to checking if there is any account that “Do not require Kerberos pre-authentication" but from the results it seems like all the accounts requires pre-authentication. 😕
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/86abd543-ff8b-4d01-ae17-6df0d9c339dc)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Intital access:
 
@@ -390,5 +397,22 @@ I used 'hashcat' to crack the NetNTLMv2 hash & found the clear text password.
 Using the cracked credentials of 'sql_svc' service account I finally got the initial access into the host via Evil-WinRM: (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5e7a5fa4-db30-4090-a511-5b56444e7d2b)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## User.txt:
+
+While I am into the network I still not have the user flag & running the enumeration as 'sql_svc', while performing the enumeration I observed a folder in a 'C:\' drive called 'SQLServer'.
+In that folder I observed a Logs folder which contains Error logs of the users:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/6cdbf1bf-db3f-484b-a4e3-36acc9a58f8e)
+
+In the log file I observed credential of the user 'Ryan.Cooper':
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/77a90705-53ab-4105-9abe-6e1c57236a3c)
+
+Using the gathered credentials I finally able to log in, into the Ryan account & got the user flag. (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ff2355e2-fed3-4165-9006-a5e7ce7fa3a4)
 
 
