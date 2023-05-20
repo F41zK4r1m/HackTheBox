@@ -400,7 +400,7 @@ Using the cracked credentials of 'sql_svc' service account I finally got the ini
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-## User.txt:
+### User.txt:
 
 While I am into the network I still not have the user flag & running the enumeration as 'sql_svc', while performing the enumeration I observed a folder in a 'C:\' drive called 'SQLServer'.
 In that folder I observed a Logs folder which contains Error logs of the users:
@@ -415,4 +415,43 @@ Using the gathered credentials I finally able to log in, into the Ryan account &
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ff2355e2-fed3-4165-9006-a5e7ce7fa3a4)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privilege Escalation:
+
+To get root flag I have to escalate my privileges from Ryan to the Administrator user. I started with checking Winpeas but didn't get any useful info to escalate my privilege.
+
+After failing to get possible vector to escalate my privilege I moved on to check vulnerable certificates after which I can impersonate the Administraor user.
+
+I used 'Certify' to enumerate for vulnerable certificates while following this [guide](https://www.ired.team/offensive-security-experiments/active-directory-kerberos-abuse/from-misconfigured-certificate-template-to-domain-admin) for the enumeration & exploitation purpose.
+
+I download the compiled 'Certify.exe' from this [Github repo](https://github.com/r3motecontrol/Ghostpack-CompiledBinaries).
+
+To search for the vulnerable certificate I used this command:
+
+```
+.\certify.exe find /vulnerable /currentuser
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/96848b2e-ec6e-48ed-bf55-4d82c2b19a05)
+
+Moving forward with the guide I have to request a new certificate on behalf of a domain administator using Certify by specifying the following parameters:
+
+```
+ - /ca - speciffies the Certificate Authority server we're sending the request to;
+ - /template - specifies the certificate template that should be used for generating the new certificate;
+ - /altname - specifies the AD user for which the new certificate should be generated.
+ 
+ certify.exe request /ca:<$certificateAuthorityHost> /template:UserAuthentication  /altname:Administrator
+```
+
+```
+.\certify.exe request /ca:dc.sequel.htb\sequel-DC-CA /template:UserAuthentication /altname:Administrator
+```
+From the certify results we can see that the certificate in PEM format has been issued successfully:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/06511bbe-11a1-4025-9ff9-a6e152e5ef29)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8f7a08ac-bdde-4dea-82bc-91d6138f79a3)
+
+Now, I have to convert the certificate which we retrieved from PEM to PFX format.
 
