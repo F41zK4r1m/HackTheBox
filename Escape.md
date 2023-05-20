@@ -453,5 +453,33 @@ From the certify results we can see that the certificate in PEM format has been 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/06511bbe-11a1-4025-9ff9-a6e152e5ef29)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8f7a08ac-bdde-4dea-82bc-91d6138f79a3)
 
-Now, I have to convert the certificate which we retrieved from PEM to PFX format.
+Now, I have to convert the certificate which we retrieved from PEM to PFX format. I saved the certificate in cert.pem file in my attack box.
+And, executed below command to generate 'cert.pfx' file:
+
+```
+openssl pkcs12 -in cert.pem -keyex -CSP "Microsoft Enhanced Cryptographic Provider v1.0" -export -out cert.pfx
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/658530bf-c98a-42ea-955e-052248835526)
+
+note: I left the password part blank.
+
+Once the cert.pfx is generated, I uploaded it to the windows machine:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4f56bc7b-0c96-478c-b6cb-eb02c9f94f60)
+
+After the upload I used Rubeus to obtain Administrator credentials:
+
+```
+.\Rubeus.exe asktgt /user:Administrator /certificate:cert.pfx /getcredentials
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ef1316fa-dd5c-4d90-a685-f5fbe1500e59)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/91e3ed5e-a3d5-45e8-8811-d28122bb0f82)
+
+Since, I have the Administrator NTLM hash, I can crack it or to save time I can use it directly to login using evil-winrm.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3feef42c-2442-4567-8370-d3fec37d69b1)
+
+After logging using Admin Hash, I finally got the root.txt. (pwn3d!🙂)
+
 
