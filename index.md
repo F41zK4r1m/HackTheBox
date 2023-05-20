@@ -24,7 +24,7 @@
   - [OnlyForYou](https://f41zk4r1m.github.io/HackTheBox/OnlyForYou) 🐧
   - [outdated](https://f41zk4r1m.github.io/HackTheBox/outdated) 🪟
   - [socket](https://f41zk4r1m.github.io/HackTheBox/socket) 🐧
-  - [Escape](https://f41zk4r1m.github.io/HackTheBox/socket/Escape) 🪟
+  - [Escape](https://f41zk4r1m.github.io/HackTheBox/Escape) 🪟
 
 ## Hard Boxes:
 
