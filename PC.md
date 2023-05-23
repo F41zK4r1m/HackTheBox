@@ -133,6 +133,10 @@ I sent the request to Burp & save the request part:
 
 With the saved requested part I ran SQLmap to retrieve the more info from DB & finally got the user & password:
 
+```bash
+sqlmap -r grpc.req --level=5 --risk=3 --batch --dbs --dump 
+```
+
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2a31f627-cb8a-4ad5-affd-3da6539c1b6d)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/38b2e9af-2709-406a-baac-555b5e9d059a)
 
@@ -140,10 +144,34 @@ With the credentials dumped from the DB I tried to login via SSH & finally able 
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7719660a-b032-49bc-999f-44a5ab1add2b)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+## Privilege Escalation:
 
+I started with manual enumeration & checked few things:
 
+  - I checked for the sudo permissions but it seems like 'Sau' can't run the sudo commands.
+  - I checked for SUID binaries but nothing helpful here as well.
+  - I ran linpeas but didn't found here anything as well.
 
+I then check for the running tcp connections & found a port 8000 listening for some services:
+
+```bash
+netstat -anot
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5226b513-6ea9-4853-8a45-aa8a520954b4)
+
+I performed port forwarding via SSH & opened the service on my host:
+
+```bash
+ssh sau@10.10.11.214 -L 8000:127.0.0.1:8000 -N
+```
+
+I found a service running 'pyload' on port 8000, pyLoad is an OSS download manager written in Python and manageable via web interface:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e9ebf106-886c-4f46-9977-99856c48e912)
+
+I tried to bypass the login by performing SQL injection but it didn't worked.
 
 
 
