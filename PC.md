@@ -7,7 +7,7 @@
 
 I began the enumeration with the quick Rsutscan on the target machine but I only got 2 ports open, 22 & 50051:
 
-```
+```bash
 sudo rustscan -a 10.10.11.214 -- -sC -sV -vv -oN pc_nmap
 ```
 
@@ -76,7 +76,7 @@ I got this [blog](https://medium.com/@ibm_ptc_security/grpc-security-series-part
 
 So, I have to make connection on gRPC service & to perform the connection I downloaded 'grpccurl' from this [Github repo](https://github.com/fullstorydev/grpcurl/releases)
 
-```
+```bash
 grpcurl -plaintext 10.10.11.214:50051 list
 ```
 
@@ -86,7 +86,7 @@ I got 2 services listed:
 
 I decided to enumerate the SimpleApp service & listed it's modules:
 
-```
+```bash
 grpcurl -plaintext 10.10.11.214:50051 list SimpleApp
 ```
 
@@ -105,7 +105,7 @@ I enumerated all 3 services & it seems like I need to have an account/authentica
 
 I downloaded grpcui that will initiate a UI portal on which we can provide our data to create or modify our blog. There are other operations also which we can use from this portal.
 
-```
+```bash
 grpcui -plaintext 10.10.11.214:50051
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d7d2eeb9-a203-4eea-b52e-1a11828483cc)
