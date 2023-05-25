@@ -16,7 +16,7 @@ sudo rustscan -a 10.10.11.207 -- -sC -sV -vv -oN coder_nmap
 
 ![image](https://user-images.githubusercontent.com/87700008/229349067-8703b6e0-6fc8-41df-91e9-0a24a1379f64.png)
 
-```rust
+```R
 PORT      STATE SERVICE       REASON          VERSION
 53/tcp    open  domain        syn-ack ttl 127 Simple DNS Plus
 80/tcp    open  http          syn-ack ttl 127 Microsoft IIS httpd 10.0
