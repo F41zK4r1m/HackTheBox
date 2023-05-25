@@ -11,7 +11,7 @@ Started with the quck rustscan for port scanning & found 4 open ports :
     Open 10.10.11.183:3000  --> ppp?    syn-ack ttl 63
     Open 10.10.11.183:3306  --> mysql   syn-ack ttl 63 MySQL 8.0.30-0ubuntu0.20.04.2
 
-```c#
+```R
 PORT     STATE SERVICE REASON         VERSION
 22/tcp   open  ssh     syn-ack ttl 63 OpenSSH 8.2p1 Ubuntu 4ubuntu0.5 (Ubuntu Linux; protocol 2.0)
 | ssh-hostkey: 
