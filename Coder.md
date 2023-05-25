@@ -10,13 +10,13 @@ https://app.hackthebox.com/machines/536
 
 Started with the Rustscan & observed many open ports in the machine :
 
-```
+```bash
 sudo rustscan -a 10.10.11.207 -- -sC -sV -vv -oN coder_nmap
 ```
 
 ![image](https://user-images.githubusercontent.com/87700008/229349067-8703b6e0-6fc8-41df-91e9-0a24a1379f64.png)
 
-```
+```bash
 PORT      STATE SERVICE       REASON          VERSION
 53/tcp    open  domain        syn-ack ttl 127 Simple DNS Plus
 80/tcp    open  http          syn-ack ttl 127 Microsoft IIS httpd 10.0
@@ -325,7 +325,7 @@ My next step in SMB enumeration, to check the open file share & my access in tho
 
 I found 3 shares with Read access : Developement, IPC$, Users
 
-```
+```bash
 smbmap -u DoesNotExist -H coder.htb  # at -u we can use any random username, which may or may not exist in the domain.
 ```
 ![image](https://user-images.githubusercontent.com/87700008/229360716-33e73953-c86c-49af-b38f-05d924fe3d3a.png)
@@ -333,7 +333,7 @@ smbmap -u DoesNotExist -H coder.htb  # at -u we can use any random username, whi
 
 I then used "rid brute force" option from **CrackMapExec** which gave me list of the users & service accounts :
 
-```
+```bash
 crackmapexec smb coder.htb -u "guest" -p "" --rid-brute
 ```
 
