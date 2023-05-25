@@ -9,7 +9,7 @@ I began by performing a port scan and discovered that ports 22 and 80 were open:
 sudo rustscan -a 10.10.11.208 -- -sC -sV -vv -oN busqueda_nmap
 ```
 
-```
+```c#
 PORT   STATE SERVICE REASON         VERSION
 22/tcp open  ssh     syn-ack ttl 63 OpenSSH 8.9p1 Ubuntu 3ubuntu0.1 (Ubuntu Linux; protocol 2.0)
 | ssh-hostkey: 
