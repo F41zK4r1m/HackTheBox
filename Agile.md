@@ -11,7 +11,7 @@ I started with a quick rustscan and found only two open ports: 22 and 80.
 ```bash
 sudo rustscan -a 10.10.11.203 -- -sC -sV -T4 -vv -oN agile_nmap
 ```
-```
+```c#
 PORT   STATE SERVICE REASON         VERSION
 22/tcp open  ssh     syn-ack ttl 63 OpenSSH 8.9p1 Ubuntu 3ubuntu0.1 (Ubuntu Linux; protocol 2.0)
 | ssh-hostkey: 
