@@ -10,7 +10,8 @@ Started with the quck rustscan for port scanning & found 4 open ports :
     Open 10.10.11.183:80  --> http    syn-ack ttl 63 Apache httpd 2.4.41 ((Ubuntu))
     Open 10.10.11.183:3000  --> ppp?    syn-ack ttl 63
     Open 10.10.11.183:3306  --> mysql   syn-ack ttl 63 MySQL 8.0.30-0ubuntu0.20.04.2
-    
+
+```c#
         PORT     STATE SERVICE REASON         VERSION
         22/tcp   open  ssh     syn-ack ttl 63 OpenSSH 8.2p1 Ubuntu 4ubuntu0.5 (Ubuntu Linux; protocol 2.0)
         | ssh-hostkey: 
@@ -105,7 +106,7 @@ Started with the quck rustscan for port scanning & found 4 open ports :
         SF:ent-Type:\x20text/plain;\x20charset=utf-8\r\nConnection:\x20close\r\n\r
         SF:\n400\x20Bad\x20Request");
         Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
-        
+ ```       
 
 Went to the webserver running on port 80, http://10.10.11.183:80 & got this page, which contains just a post about SSH login :
 
