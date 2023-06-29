@@ -28,3 +28,16 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 In the port 80, I observed it's running the nginx server with version 1.18.0 & there is a domain present on that server: "pilgrimage.htb".
 I added the domain to my hosts file & browsed through it.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Directory listing:
+
+I then performed subdomain & DNS host enumeration on the target host, using GoBuster & FFUF.
+
+I observed 3 sub-directories in the results:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/70ef7b65-79d7-4306-a4f5-386da3cddcbd)
+
+Didn't found anything in the DNS host enumeration. Also, when tried to access those 3 directories but got 403 error which looks like I need to authenticate before accessing the directories.
+
