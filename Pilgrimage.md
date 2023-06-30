@@ -10,7 +10,6 @@ I started with performing the quick rustscan on the target to check all open por
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0309b704-0c2f-493c-8881-8ccdeec91813)
 ```bash
-PORT   STATE SERVICE REASON         VERSION
 22/tcp open  ssh     syn-ack ttl 63 OpenSSH 8.4p1 Debian 5+deb11u1 (protocol 2.0)
 | ssh-hostkey: 
 |   3072 20:be:60:d2:95:f6:28:c1:b7:e9:e8:17:06:f1:68:f3 (RSA)
@@ -20,13 +19,22 @@ PORT   STATE SERVICE REASON         VERSION
 |   256 d1:4e:29:3c:70:86:69:b4:d7:2c:c8:0b:48:6e:98:04 (ED25519)
 |_ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILGkCiJaVyn29/d2LSyMWelMlcrxKVZsCCgzm6JjcH1W
 80/tcp open  http    syn-ack ttl 63 nginx 1.18.0
+| http-cookie-flags: 
+|   /: 
+|     PHPSESSID: 
+|_      httponly flag not set
+| http-git: 
+|   10.10.11.219:80/.git/
+|     Git repository found!
+|     Repository description: Unnamed repository; edit this file 'description' to name the...
+|_    Last commit message: Pilgrimage image shrinking service initial commit. # Please ...
 | http-methods: 
-|_  Supported Methods: GET HEAD POST OPTIONS
+|_  Supported Methods: GET HEAD POST
 |_http-server-header: nginx/1.18.0
-|_http-title: Did not follow redirect to http://pilgrimage.htb/
+|_http-title: Pilgrimage - Shrink Your Images
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
-In the port 80, I observed it's running the nginx server with version 1.18.0 & there is a domain present on that server: "pilgrimage.htb".
+In the port 80, I observed it's running the nginx server with version 1.18.0 & there is a domain present on that server: "pilgrimage.htb". Along with that I also observed './git' folder running on the host.
 I added the domain to my hosts file & browsed through it.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -45,4 +53,22 @@ Then I checked the website & found it's providig tool to compress image files.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0b8fdf7d-b468-4bbb-a1f6-f742c784d903)
 
+After going through all the results I move onto the GIT part & tried to accessed it but it seems like I can't access "http://pilgrimage.htb/.git/" directly. So, I used a tool called "git-dumper" to dump the GIT repo into my local system.
+
+```bash
+git-dumper http://pilgrimage.htb/.git/ git
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5aefc3c8-f744-4cee-a1eb-736b39b05c2e)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/eebb3178-7c76-4147-bbd8-275f6050133b)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### GIT enumeration:
+
+After the dump I started with the GIT enumeration:
+
+- Found just one 'master' branch:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b01d41b3-a8ef-497b-9cda-6eb55ceaa398)
 
