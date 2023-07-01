@@ -3,10 +3,11 @@
 
   ## Enumeration:
 
-I started with performing the quick rustscan on the target to check all open ports & running services. After the completion of the scan I found 2 open ports:
-
-  - 22 -> OpenSSH 8.4p1 Debian 5+deb11u1 (protocol 2.0)
-  - 80 -> nginx 1.18.0
+I started by performing a quick rustscan on the target to check for all open ports and running services. After completing the scan, I discovered 2 open ports:
+```
+Port 22: OpenSSH 8.4p1 Debian 5+deb11u1 (protocol 2.0)
+Port 80: nginx 1.18.0
+```
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0309b704-0c2f-493c-8881-8ccdeec91813)
 ```bash
@@ -34,26 +35,25 @@ I started with performing the quick rustscan on the target to check all open por
 |_http-title: Pilgrimage - Shrink Your Images
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
-In the port 80, I observed it's running the nginx server with version 1.18.0 & there is a domain present on that server: "pilgrimage.htb". Along with that I also observed './git' folder running on the host.
-I added the domain to my hosts file & browsed through it.
+In port 80, I observed that the server is running nginx version 1.18.0, and there is a domain present on that server: "**pilgrimage.htb**". Additionally, I noticed a './git' folder running on the host. I added the domain to my hosts file and browsed through it.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Web Enumeration:
 
-I then performed subdomain & DNS host enumeration on the target host, using GoBuster & FFUF.
+Next, I performed subdomain and DNS host enumeration on the target host using GoBuster and FFUF.
 
-I observed 3 sub-directories in the results:
+In the results, I discovered 3 sub-directories:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/70ef7b65-79d7-4306-a4f5-386da3cddcbd)
 
-Didn't found anything in the DNS host enumeration. Also, when tried to access those 3 directories but got 403 error which looks like I need to authenticate before accessing the directories.
+However, the DNS host enumeration did not yield any significant findings. When I attempted to access the 3 directories, I encountered a 403 error, indicating the need for authentication before accessing them.
 
-Then I checked the website & found it's providig tool to compress image files.
+Moving on to the website itself, I found that it provides a tool for compressing image files:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0b8fdf7d-b468-4bbb-a1f6-f742c784d903)
 
-After going through all the results I move onto the GIT part & tried to accessed it but it seems like I can't access "http://pilgrimage.htb/.git/" directly. So, I used a tool called "git-dumper" to dump the GIT repo into my local system.
+After reviewing all the results, I proceeded to the GIT part and tried to directly access "http://pilgrimage.htb/.git/." Unfortunately, I couldn't access it. As a workaround, I utilized a tool called "git-dumper" to dump the GIT repository to my local system:
 
 ```bash
 git-dumper http://pilgrimage.htb/.git/ git
@@ -66,21 +66,20 @@ git-dumper http://pilgrimage.htb/.git/ git
 
 ### GIT enumeration:
 
-After the dump I started with the GIT enumeration:
+After completing the dump, I proceeded with the GIT enumeration, which revealed the following:
 
-- Found just one 'master' branch:
+- There was only one 'master' branch:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b01d41b3-a8ef-497b-9cda-6eb55ceaa398)
 
-- In GIT logs I found a user with the commit ID: **e1a40beebc7035212efdcb15476f9c994e3634a7**, user: emily <emily@pilgrimage.htb>
+- Upon inspecting the GIT logs, I discovered a user associated with the commit ID e1a40beebc7035212efdcb15476f9c994e3634a7. The user was identified as emily emily@pilgrimage.htb.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4c4dbc9d-7d28-43c2-8329-43c04aba526f)
 
-- I found a PHP library "BULLETPROOF", which handles secure image uploads.
-
+- I came across a PHP library named "BULLETPROOF" during my GIT exploration. This library is responsible for secure image uploads.
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9dd2cf3c-27ae-41f3-b9fc-71569613e823)
 
-- In the dumped GIT folder I found a linux executable file name: "magic", which looks like performing the operation of image shrink. It's using "ImageMagick 7.1.0-49", which is vulnerable to arbitrary file read.
+- Within the dumped GIT folder, I found a Linux executable file named "magic." It appears to be involved in image shrinking operations. The executable utilizes "ImageMagick 7.1.0-49," which is known to have a vulnerability that allows arbitrary file reading.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2e3cfcf2-4b39-4bcd-a4a8-990a29881351)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f5d4ca2c-0477-4105-9a1c-1a7f83093374)
@@ -89,36 +88,36 @@ After the dump I started with the GIT enumeration:
 
 ## Initial access:
 
-To exploit the ImageMagic I downloaded a POC from this [Github repo](https://github.com/Sybil-Scan/imagemagick-lfi-poc) & followed the process.
+To exploit ImageMagick, I downloaded a proof-of-concept (POC) from this Github repository and followed the process outlined below.
 
-First I generated a malicious PNG file to read /etc/passwd content:
+First, I generated a malicious PNG file to read the contents of "/etc/passwd":
 
 ```python3
 python3 generate.py -f "/etc/passwd" -o exploit.png
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8d7cdd68-49fb-4c79-9870-8ff862c2e23b)
 
-Then uploaded the file to website for shrinking & download the result PNG file to my attack box.
+Next, I uploaded the file to the website to shrink it and downloaded the resulting PNG file to my attack box:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/fe657479-e11a-47a8-bc8f-9d7384e987e9)
 
-Using the "Exiftool" I extracted the RAW content of the PNG file:
+Using "Exiftool," I extracted the raw content from the PNG file:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f1fc47be-8712-4b87-98a0-69cdbeaaf4c6)
 
-Decoded this raw profile in the GitHub & got the result of '/etc/passwd' file content:
+I decoded this raw profile using the provided GitHub resource and obtained the contents of the "/etc/passwd" file:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d627f0d3-e840-40c2-8a20-7cebc80aa27b)
 
-Now, as I confirmed that the POC is working, I moved on to fetch more relevant information & observed in the dashboard.php file that there is a SQL database configured which is verifying the user access:
+Having confirmed that the POC is functioning, I proceeded to gather more relevant information. Upon examining the "dashboard.php" file, I discovered that a SQL database was configured to verify user access:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2e231b0e-7885-4bf0-8431-c4103a4927a5)
 
-I created a PNG image to fetch the data from DB "/var/db/pilgrimage" & uploaded it, got the result image & after decoding the image I found a password which belongs to **emily**.
+I created a PNG image to fetch data from the "/var/db/pilgrimage" database, uploaded it, obtained the resulting image, and decoded it. As a result, I found a password belonging to **emily**.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b02bfce4-6289-41a3-a5f2-059c73d4f7ff)
 
-Used the grabbed password & tried to logged in via SSH. Using the password I successfully logged into the Emily profile & grabbed the user flag.(pwn3d!🙂)
+Using the captured password, I attempted to log in via SSH and successfully gained access to the Emily profile, allowing me to retrieve the user flag. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c911a477-777d-49b8-a2b9-7afba77abad3)
 
@@ -126,22 +125,22 @@ Used the grabbed password & tried to logged in via SSH. Using the password I suc
 
 ## Privlege Escalation:
 
-I started to check for priv esc vectors manually & I observed:
+To search for privilege escalation vectors manually, I made the following observations:
 ```
 - Emily may not run sudo on pilgrimage.
 - No schedule jobs are running.
 - No SUID/SGID Binaries, which would help in priv esc.
 ```
 
-I then uploaded a pspy binary to check for the running processes & found a bash script: 'malwarescan.sh', which I assume is being used to check the uploaded files on website for the malwares.
+Next, I uploaded a pspy binary to check for running processes. During the process, I discovered a bash script named malwarescan.sh, which I assume is used to scan uploaded files on the website for malware.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/fa741d4d-4b8e-4c3b-bb04-4951ad922310)
 
-The good thing is that this file is owned by root & we have a read permission to it:
+The noteworthy aspect is that this file is owned by root, and we have read permissions for it.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/77f2e640-af9e-4ae7-ab92-5e3ba15083d4)
 
-Content of the script is:
+The content of the script is as follows:
 
 ```bash
 #!/bin/bash
@@ -160,15 +159,15 @@ blacklist=("Executable script" "Microsoft executable")
 done
 ```
 
-In the script we can clearly see that the file is using "**binwalk**" binary.
+In the script, it's evident that the file is utilizing the "**binwalk**" binary.
 
-I checked for the version of binwalk & found it's running on 2.3.2 & there is an exploit available in Exploit-DB. This version of Binwalk is vulnerable to remote code execution.
+Upon checking the version of binwalk, I discovered it's running version 2.3.2, which has a known exploit listed in Exploit-DB. This version of binwalk is vulnerable to remote code execution.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a1dbfd76-2118-448d-86f9-c690027fbdc8)
 
-So to sum up all the findings we can just execute the command remotely using Binwalk & when the "malware.sh" will execute with root privileges, it will also execute the Binwalk as root privilge & then we can get a shell back as a root user.
+To summarize the findings, we can execute a command remotely using binwalk. When the malwarescan.sh script executes with root privileges, it will also execute binwalk with root privileges, allowing us to obtain a shell as the root user.
 
-I downloaded the exploit & followed the steps to get a shell back to my host:
+I downloaded the exploit and followed these steps to gain a shell on my host:
 
 ```
 - created a PNG image file: image.png
@@ -179,7 +178,7 @@ I downloaded the exploit & followed the steps to get a shell back to my host:
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c304da05-307d-4837-a111-d80a094c1088)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/00870893-2f92-402b-a535-7a481695508c)
 
-Once I uploaded the malicious png file, I instantly received a connection back to my host, with the root user: (pwn3d!🙂)
+Upon uploading the malicious PNG file, I instantly received a connection back to my host, with the root user. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d028d091-567b-4b99-9e40-29c5ec18fd96)
 
