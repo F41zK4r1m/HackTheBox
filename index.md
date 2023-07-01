@@ -14,6 +14,7 @@
   - [photobomb](https://f41zk4r1m.github.io/HackTheBox/photobomb) 🐧
   - [soccer](https://f41zk4r1m.github.io/HackTheBox/soccer) 🐧
   - [PC](https://f41zk4r1m.github.io/HackTheBox/PC) 🐧
+  - [Pilgrimage](https://f41zk4r1m.github.io/HackTheBox/Pilgrimage) 🐧
 
 
 
