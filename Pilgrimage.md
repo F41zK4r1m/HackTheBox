@@ -121,3 +121,66 @@ I created a PNG image to fetch the data from DB "/var/db/pilgrimage" & uploaded 
 Used the grabbed password & tried to logged in via SSH. Using the password I successfully logged into the Emily profile & grabbed the user flag.(pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c911a477-777d-49b8-a2b9-7afba77abad3)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privlege Escalation:
+
+I started to check for priv esc vectors manually & I observed:
+```
+- Emily may not run sudo on pilgrimage.
+- No schedule jobs are running.
+- No SUID/SGID Binaries, which would help in priv esc.
+```
+
+I then uploaded a pspy binary to check for the running processes & found a bash script: 'malwarescan.sh', which I assume is being used to check the uploaded files on website for the malwares.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/fa741d4d-4b8e-4c3b-bb04-4951ad922310)
+
+The good thing is that this file is owned by root & we have a read permission to it:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/77f2e640-af9e-4ae7-ab92-5e3ba15083d4)
+
+Content of the script is:
+
+```bash
+#!/bin/bash
+
+blacklist=("Executable script" "Microsoft executable")
+
+/usr/bin/inotifywait -m -e create /var/www/pilgrimage.htb/shrunk/ | while read FILE; do
+        filename="/var/www/pilgrimage.htb/shrunk/$(/usr/bin/echo "$FILE" | /usr/bin/tail -n 1 | /usr/bin/sed -n -e 's/^.*CREATE //p')"
+        binout="$(/usr/local/bin/binwalk -e "$filename")"
+        for banned in "${blacklist[@]}"; do
+                if [[ "$binout" == *"$banned"* ]]; then
+                        /usr/bin/rm "$filename"
+                        break
+                fi
+        done
+done
+```
+
+In the script we can clearly see that the file is using "**binwalk**" binary.
+
+I checked for the version of binwalk & found it's running on 2.3.2 & there is an exploit available in Exploit-DB. This version of Binwalk is vulnerable to remote code execution.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a1dbfd76-2118-448d-86f9-c690027fbdc8)
+
+So to sum up all the findings we can just execute the command remotely using Binwalk & when the "malware.sh" will execute with root privileges, it will also execute the Binwalk as root privilge & then we can get a shell back as a root user.
+
+I downloaded the exploit & followed the steps to get a shell back to my host:
+
+```
+- created a PNG image file: image.png
+- with the exploit I changed the file to run the netcat when binwalk is executed.
+- When the malicious file is ready I uploaded it to the '/var/www/pilgrimage.htb/shrunk/' which I obsered that this is the location from where binwalk is performing the job.
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c304da05-307d-4837-a111-d80a094c1088)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/00870893-2f92-402b-a535-7a481695508c)
+
+Once I uploaded the malicious png file, I instantly received a connection back to my host, with the root user: (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d028d091-567b-4b99-9e40-29c5ec18fd96)
+
+
