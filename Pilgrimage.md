@@ -72,3 +72,52 @@ After the dump I started with the GIT enumeration:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b01d41b3-a8ef-497b-9cda-6eb55ceaa398)
 
+- In GIT logs I found a user with the commit ID: **e1a40beebc7035212efdcb15476f9c994e3634a7**, user: emily <emily@pilgrimage.htb>
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4c4dbc9d-7d28-43c2-8329-43c04aba526f)
+
+- I found a PHP library "BULLETPROOF", which handles secure image uploads.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9dd2cf3c-27ae-41f3-b9fc-71569613e823)
+
+- In the dumped GIT folder I found a linux executable file name: "magic", which looks like performing the operation of image shrink. It's using "ImageMagick 7.1.0-49", which is vulnerable to arbitrary file read.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2e3cfcf2-4b39-4bcd-a4a8-990a29881351)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f5d4ca2c-0477-4105-9a1c-1a7f83093374)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Initial access:
+
+To exploit the ImageMagic I downloaded a POC from this [Github repo](https://github.com/Sybil-Scan/imagemagick-lfi-poc) & followed the process.
+
+First I generated a malicious PNG file to read /etc/passwd content:
+
+```python3
+python3 generate.py -f "/etc/passwd" -o exploit.png
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8d7cdd68-49fb-4c79-9870-8ff862c2e23b)
+
+Then uploaded the file to website for shrinking & download the result PNG file to my attack box.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/fe657479-e11a-47a8-bc8f-9d7384e987e9)
+
+Using the "Exiftool" I extracted the RAW content of the PNG file:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f1fc47be-8712-4b87-98a0-69cdbeaaf4c6)
+
+Decoded this raw profile in the GitHub & got the result of '/etc/passwd' file content:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d627f0d3-e840-40c2-8a20-7cebc80aa27b)
+
+Now, as I confirmed that the POC is working, I moved on to fetch more relevant information & observed in the dashboard.php file that there is a SQL database configured which is verifying the user access:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2e231b0e-7885-4bf0-8431-c4103a4927a5)
+
+I created a PNG image to fetch the data from DB "/var/db/pilgrimage" & uploaded it, got the result image & after decoding the image I found a password which belongs to **emily**.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b02bfce4-6289-41a3-a5f2-059c73d4f7ff)
+
+Used the grabbed password & tried to logged in via SSH. Using the password I successfully logged into the Emily profile & grabbed the user flag.(pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c911a477-777d-49b8-a2b9-7afba77abad3)
