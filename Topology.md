@@ -126,3 +126,38 @@ john hash.txt --format=md5crypt-long -w=/usr/share/wordlists/rockyou.txt
 With the cracked credentials I was finally able to login via SSH & retrieved the user flag.(pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/802eafd8-a980-4a4f-901a-b6d5c3853064)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privilege Escalation:
+
+I started with the manual approach to check for privilege escalation vectors.
+
+```
+- checked for sudo permissions "sudo -l" but got response as: Sorry, user vdaisley may not run sudo on topology.
+- No schedule jobs are running.
+- No SUID binary available to help in priv esc.
+```
+
+I then uploaded pspsy to check for the running processes owned by the root user. I found a binary called "gnuplot" in the /opt directory which looks like performing some scheduled tasks.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c7590652-d52d-45a4-a737-28f5ebe0564e)
+
+I found that for some reason I am not having read access but write access to the /opt/gnuplot folder:
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a6b8cac9-8d8a-49fe-b280-dec04ee88e10)
+
+I was looked for the privilege escalation vectors related to gnuplot & found that "gnuplot is a command-line and GUI program that can generate two- and three-dimentional plots of functions, data, and data fits."
+I got to know from this [exploit notes](https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/gnuplot-privilege-escalation/) website that if I will just create a ".plt" file inside the gnuplot directory, I can run it with the same privilege as the owner of the file. 
+
+So, I inserted a bash command to convert BASH with SUID permissions & created a file in .plt format:
+
+```bash
+system "chmod u+s /bin/bash"
+```
+After few seconds when the file got executed by root user I finally got the bash with SUID permissions. After which I got the root access. (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bb9de592-47a2-4110-9c45-870a667fd9f4)
+
+
+
+
