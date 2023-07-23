@@ -491,6 +491,32 @@ Using these credentials I tried to login via win-rm protocol & I logged in succe
 
 ## Privilege Escalation:
 
+Starting for the privilege escalation when I enumerated through the directories I observed a directory in "C:\" called :"certs"
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9fa0fe59-431b-44a5-b65d-2f497d7b90c5)
+
+This directory & the box name "Authority" hinted towards the certifcate authority templates, where I can use vulnerbale certificate templates to escalate my privilege or to impersonate any user.
+
+I used a binary "[certify.exe](https://github.com/GhostPack/Certify)" to check for all the available vulnerable certificates.
+Searching for the vulnerable certifiactes using "Certify" showed 1 available certificate "Corpvpn", which we can request.
+
+```PS
+.\Certify.exe find /vulnerable
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d27cfafb-6331-49b0-8048-fe78f0de4baf)
+
+From the [hactrickz](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/ad-certificates/domain-escalation#misconfigured-certificate-templates-esc1) website I got to know that, the "ENROLLEE_SUPPLIES_SUBJECT" flag allows the certificate requester to define the subject details, which are typically used for identification purposes, such as the common name, organization, and other attributes.
+
+This indicates we can add a new computer account in Active Directory using the credentials of a domain user. In this case, I will use the "[impacket-addcomputer](https://tools.thehacker.recipes/impacket/examples/addcomputer.py)" tool.
+
+```bash
+python3 /opt/impacket/examples/addcomputer.py authority.htb.corp/svc_ldap:'lDaP_1n_th3_cle4r!' -computer-name 'FXI$' -computer-pass 'Passw0rd1!'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3108b696-b9f5-4d3a-b9ef-2f207ff9f141)
+
+Now using Certipy, we can generated a certificate request using the computer account "FXI$" with the password "Passw0rd1!" and the template "CorpVPN," which will allow us to escalate privileges.
+
+
 
 
 
