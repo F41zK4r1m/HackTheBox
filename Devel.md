@@ -112,9 +112,11 @@ However, the "ms10_015_kitrap0d" exploit seemed promising for privilege escalati
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/18bbb9fd-ac87-4f5b-8a3e-e38305e17f06)
 
 Running the exploit resulted in another meterpreter session running with "NT Authority \System" privileges : (pwn3d! 🙂)
+
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/1b79cab2-5c49-4353-9a96-bc2a26626822)
 
 With escalated privilege level, I gained access to sensitive files and directories, including both the user and root flags.
+
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/451de12e-683b-489a-8882-fe5bbba8ed8c)
 
 
