@@ -12,6 +12,7 @@
   - [Stocker](https://f41zk4r1m.github.io/HackTheBox/Stocker) 🐧
   - [photobomb](https://f41zk4r1m.github.io/HackTheBox/photobomb) 🐧
   - [soccer](https://f41zk4r1m.github.io/HackTheBox/soccer) 🐧
+  - [Devel](https://f41zk4r1m.github.io/HackTheBox/Devel) 🪟
 
 
 
