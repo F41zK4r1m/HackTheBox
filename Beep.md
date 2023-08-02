@@ -4,7 +4,7 @@ https://app.hackthebox.com/machines/Beep
 
 ## Enumeration:
 
-I began with quick rustscan which showed multiple open ports in the machine.
+I started by running a quick rustscan to scan the machine for open ports and their services.
 
 ```bash
 sudo rustscan -a 10.10.10.7 -- -sC -sV -vv -oN beep_nmap
@@ -101,17 +101,15 @@ PORT      STATE SERVICE    REASON         VERSION
 Service Info: Hosts:  beep.localdomain, 127.0.0.1, example.com, localhost; OS: Unix
 ```
 
-Since, I got so many open ports I started my enumeration with Webserver hosted on port 80 & 443.
+The scan revealed multiple open ports, so I decided to begin my enumeration with the web server hosted on ports 80 and 443.
 
-Port 80 is re-directing all the traffic towards port 443, i.e. https://10.10.10.7
-
-The main homepage is having some Elastix application running which requires authentication:
+Port 80 redirected all traffic to HTTPS at https://10.10.10.7. When I accessed the website, I found an Elastix application that required authentication:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/38793ce7-da82-4b54-86e8-981844a61c01)
 
 ### Fuzzing:
 
-Once confirming the web-server is running on port 443 I executed the sub-directory enumeration using GoBuster, which gave me multiple sub-directories in the result:
+After confirming that the web server is running on port 443, I decided to perform sub-directory enumeration using GoBuster to discover any hidden directories. The GoBuster scan revealed multiple sub-directories on the web server:
 
 ```bash
 gobuster dir -u https://10.10.10.7/ -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o beep_web -b 404,403 -k
@@ -133,69 +131,69 @@ gobuster dir -u https://10.10.10.7/ -t 20 -w /usr/share/wordlists/dirbuster/dire
 /vtigercrm            (Status: 301) [Size: 313] [--> https://10.10.10.7/vtigercrm/]
 ```
 
-I started checking the intresting directories one by one, in the "/admin" the application revealed the backend application & it's version "FreePBX 2.8.1.4".
+Among the discovered sub-directories, the "/admin" directory caught my attention as it revealed the backend application with version "FreePBX 2.8.1.4":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3e3c9f48-7807-4331-9982-e3315ce7cb7d)
 
-Vtiger CRM 5.1.0 running on "/vtigercrm":
+Another interesting discovery was the "Vtiger CRM 5.1.0" running on "/vtigercrm":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/444a6c4f-aaa6-4123-96fe-0be67220ef73)
 
-Free PBX 2.5 running on "/recordings"
+There was also "FreePBX 2.5" running on the "/recordings" directory:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/94f5237b-0599-4882-a56e-88fac5daf267)
 
-After checking all the web-directories I checked for the exploits related to Elastix on searchsploit & got few results:
+After checking all the web directories, I proceeded to search for exploits related to Elastix on the searchsploit database. I found a few results:
 
 ```bash
 searchsploit Elastix
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4d4d3aa8-ba1d-401b-8b1c-bb599af1edb5)
 
-Since first 3 exploits are related to XSS & I still not authenticated I choose the 3rd exploit from the results "Elastix 2.2.0 - 'graph.php' Local File Inclusion" & downloaded it.
+Since the first three exploits were related to XSS and I still hadn't authenticated, I chose the third exploit from the results, "Elastix 2.2.0 - 'graph.php' Local File Inclusion," and downloaded it:
 
 ```bash
 searchsploit -m php/webapps/37637.pl
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dc8aaeaa-6523-47ad-bb89-1839b902ba2f)
 
-After downnloading I checked the script content & found the POC in comment of the script:
+I checked the script content and found the Proof of Concept (POC) in the comments of the script:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/247a864a-a960-406b-a3ec-c81713476da6)
 
-So, basically the vulnerability exists in the Vtiger CRM. Instead of using the scirpt I manually queried the vulnerable path using curl & got the response:
+So, basically the vulnerability exists in the Vtiger CRM. To exploit the vulnerability, I manually queried the vulnerable path using curl and received a response:
 
 ```bash
 curl -k -vv 'https://10.10.10.7/vtigercrm/graph.php?current_language=../../../../../../../..//etc/amportal.conf%00&module=Accounts&action'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7e909688-ff22-4c9f-a610-a8ed5749062b)
 
-Since the result is too big, I queried the same URL in the browser for better view & got multiple credentils present in the "amportal.conf" file.
+Since the result was too large to display in the terminal, I queried the same URL in the browser for better view and found multiple credentials present in the "amportal.conf" file:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7151713b-f893-4144-b60e-b707e67e10c3)
 
-I changed the directory to "/etc/passwd" & found a user "fanis" in it.
+I also checked the "/etc/passwd" file and found a user named "fanis" in it.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e175f570-461b-4b15-ae39-54462adbc19d)
 
 ## User flag:
 
-By applying the same logic I again changed the directory to "/home/fanis/user.txt" & got user flag as well. But this might not be the intended way to fetch the flag as I still not have the shell access.
+By using the same logic, I changed the directory to "/home/fanis/user.txt" and successfully retrieved the user flag. However, I realized that this might not be the intended way to fetch the flag, as I still didn't have shell access.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/74dff33a-c861-4b17-863a-d8ae6a96f43e)
 
-To go the intentional way I used the credentials which I extracted from "/etc/amportal.conf" by exploiting LFI vulnerability. I used admin credentials & successfully logged into:
+To proceed the intended way, I utilized the credentials I extracted from "/etc/amportal.conf" by exploiting the LFI vulnerability. Using the admin credentials, I successfully logged into various applications:
 
 - https://10.10.10.7/admin/
 - https://10.10.10.7/vtigercrm
 - https://10.10.10.7/recordings
 - https://10.10.10.7/index.php
 
-### Root method-1:
+### Root Method-1:
 
-As I was able to login onto multiple services using the same credentials, I thought to try the same credentials for SSH logon as well. Since the password belongs to admin user I tried the same credentials for the root.
+As I was able to login to multiple services using the same credentials, I thought of trying the same credentials for SSH login as well. Since the password belongs to the admin user, I tried using the same password for the root account.
 
-Initially I was facing some difficulty while connecting via SSH, so I tried some extra options while connecting & using the same password I was successfully logged in as a root user. (pwn3d!🙂)
+Initially, I faced some difficulty while connecting via SSH, so I added some extra options while connecting, and with the same password, I was successfully logged in as the root user. (pwn3d!🙂)
 
 ```bash
 ssh root@10.10.10.7 -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-dss
@@ -204,32 +202,33 @@ ssh root@10.10.10.7 -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgor
 
 ### Method 2:
 
-While the Elastix application is running the vulnerable version & now I have the credentials for authentication as well. I can try the "FreePBX 2.10.0 / Elastix 2.2.0 - Remote Code Execution" exploit.
+Since the Elastix application is running the vulnerable version, and I now have the credentials for authentication, I can try the "FreePBX 2.10.0 / Elastix 2.2.0 - Remote Code Execution" exploit.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/1fe8ec7d-44ad-4747-b3a6-ba45d22d8d6a)
 
-So, moving further I download the script & made the necessary changes according my requirement:
+To proceed, I downloaded the script and made the necessary changes according to my requirements:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/73b33a29-bba7-4492-a429-d55111028b93)
 
-I changed the rhost & lhost but for the extension part, I searched in the website & got the extension number as 233.
+I updated the rhost and lhost values, and for the extension part, I found the extension number as 233 from the website:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/df8f2095-5ba7-4992-8c11-e11b9ab3645c)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5e4c464b-ac65-4c95-9925-0163d3d0950e)
 
-After making all the necessary changes & executing the script I got the reverse shell in my netcat listener as user: "asterisk"
+After making all the necessary changes and executing the script, I got a reverse shell in my netcat listener as the user "asterisk".
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/07e94a11-63c8-4572-81cc-58449bec80a7)
 
-After getting the shell, I started with the manual enumeration & checked the sudo permissions:
+With this shell, I started with manual enumeration and checked the sudo permissions:
 
 ```bash
 sudo -l
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/92c0503b-45f1-4cdf-90f7-a63bdc11f637)
 
-I can run multiple commands as sudo without using password, so I quickly browsed through GTFObins & checked for nmap.
-Using nmap I just ran these 2 commands & I got shell as a root user again. (pwn3d! 🙂)
+I found that I can run multiple commands as sudo without entering a password. So, I quickly referred to GTFObins and checked for nmap.
+
+Using nmap, I ran these 2 commands and obtained a shell as the root user. (pwn3d!🙂)
 
 ```bash
 sudo nmap --interactive
