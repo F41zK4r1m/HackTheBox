@@ -191,4 +191,48 @@ To go the intentional way I used the credentials which I extracted from "/etc/am
 - https://10.10.10.7/recordings
 - https://10.10.10.7/index.php
 
+### Root method-1:
 
+As I was able to login onto multiple services using the same credentials, I thought to try the same credentials for SSH logon as well. Since the password belongs to admin user I tried the same credentials for the root.
+
+Initially I was facing some difficulty while connecting via SSH, so I tried some extra options while connecting & using the same password I was successfully logged in as a root user. (pwn3d!🙂)
+
+```bash
+ssh root@10.10.10.7 -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-dss
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b3dfa059-c78f-40df-ae3a-bbdb94fdf4a9)
+
+### Method 2:
+
+While the Elastix application is running the vulnerable version & now I have the credentials for authentication as well. I can try the "FreePBX 2.10.0 / Elastix 2.2.0 - Remote Code Execution" exploit.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/1fe8ec7d-44ad-4747-b3a6-ba45d22d8d6a)
+
+So, moving further I download the script & made the necessary changes according my requirement:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/73b33a29-bba7-4492-a429-d55111028b93)
+
+I changed the rhost & lhost but for the extension part, I searched in the website & got the extension number as 233.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/df8f2095-5ba7-4992-8c11-e11b9ab3645c)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5e4c464b-ac65-4c95-9925-0163d3d0950e)
+
+After making all the necessary changes & executing the script I got the reverse shell in my netcat listener as user: "asterisk"
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/07e94a11-63c8-4572-81cc-58449bec80a7)
+
+After getting the shell, I started with the manual enumeration & checked the sudo permissions:
+
+```bash
+sudo -l
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/92c0503b-45f1-4cdf-90f7-a63bdc11f637)
+
+I can run multiple commands as sudo without using password, so I quickly browsed through GTFObins & checked for nmap.
+Using nmap I just ran these 2 commands & I got shell as a root user again. (pwn3d! 🙂)
+
+```bash
+sudo nmap --interactive
+nmap> !sh
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ceb1ebae-0545-4714-9ad3-0d97d39dfafa)
