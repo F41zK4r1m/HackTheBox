@@ -184,5 +184,11 @@ By applying the same logic I again changed the directory to "/home/fanis/user.tx
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/74dff33a-c861-4b17-863a-d8ae6a96f43e)
 
+To go the intentional way I used the credentials which I extracted from "/etc/amportal.conf" by exploiting LFI vulnerability. I used admin credentials & successfully logged into:
+
+- https://10.10.10.7/admin/
+- https://10.10.10.7/vtigercrm
+- https://10.10.10.7/recordings
+- https://10.10.10.7/index.php
 
 
