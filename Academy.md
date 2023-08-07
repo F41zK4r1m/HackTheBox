@@ -85,3 +85,51 @@ I used these new credentials to logon as admin on "/admin.php" site & logged in 
 After logging in to the admin panel I observed that there is another dev staging domain available "dev-staging-01.academy.htb". I added this domain to my hosts config file & browsed thorugh it:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bf15e951-224d-4d64-9d36-45b4b7edb962)
+
+### Shell access:
+
+When browsing through this staging environment I observed that there is an app running "Laravel", which also exposed "app_key". Searching for the exploits related to "laravel" I found this on [Github](https://github.com/kozmic/laravel-poc-CVE-2018-15133).
+
+This explains about the RCE in the Laravel application:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d18c32d1-9fff-4ff0-95df-6fe6476cc161)
+
+In another [Github](https://github.com/aljavier/exploit_laravel_cve-2018-15133/tree/main) repo I got the python based poc for this exploit.
+
+```python3
+python3 pwn_laravel.py http://dev-staging-01.academy.htb/ dBLUaMuZz7Iq06XtL/Xnz/90Ejq+DEEynggqubHWFj0= --interactive
+```
+
+Using the python based exploit, I finally got the shell as user "www-data":
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b47b9173-d235-4caf-ae22-e1a0d6c49a65)
+
+## User flag:
+
+While enumerating the "/home" directory I found multiple users in it:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a87c8cb0-6cc4-4062-b9cd-67d6bf1ccba1)
+
+But observed user flag in the "cry0l1t3" directory, for which I haven't the access:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0c14cee1-3ce8-4555-be0b-77707f2400e4)
+
+So, to get the user flag, I started manual enumeration to search for some credentials. While looking into "/var/www/html/academy" I found a environment file, which contains a password for the dev user:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4030066e-0cd3-4156-a95f-88b2d2b61054)
+
+Since, the password belongs to a developer & but there is a possibility of the password re-use & since "cry0l1t3" contains user flag, I tried the same credentials in SSH for "cry0l1t3" & logged in successfully.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/207c2bfe-571f-4f9e-8815-92c38896631a)
+
+After logging in, I finally got the user flag. (pwn3d! 🙂)
+
+### Privilege escalation:
+
+When I checked the groups of the "cry0l1t3", I observed that he is in the "adm" group. When searched the roles & responsibilities for this group I observed from this [doc](https://wiki.debian.org/SystemGroups): 
+
+```
+Group adm is used for system monitoring tasks. Members of this group can read many log files in /var/log, and can use xconsole.
+Historically, /var/log was /usr/adm (and later /var/adm), thus the name of the group. 
+```
+
