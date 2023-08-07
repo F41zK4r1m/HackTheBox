@@ -6,7 +6,7 @@ https://app.hackthebox.com/machines/Academy
 
 ## Enumeration:
 
-I started with the quick rustscan & observed only 3 open ports 22, 80 & 33060:
+To initiate the assessment of the target machine, I utilized a quick rustscan, which revealed the presence of only three open ports: 22, 80, and 33060:
 
 ```Rust
 PORT      STATE SERVICE REASON         VERSION
@@ -60,92 +60,93 @@ SF:e\"\x05HY000")%r(giop,9,"\x05\0\0\0\x0b\x08\x05\x1a\0");
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-On port 80 I observed a domain "download.htb", which I added to my hosts config file.
+On port 80, I noticed a domain named "download.htb," which I promptly added to my hosts configuration file.
 
-After adding the domain to the hosts config file I performed fuzzing sub-directory & vhost but didn't observed anything.
+Following the addition of the domain to the hosts configuration file, I proceeded to perform fuzzing on sub-directories and virtual hosts, but unfortunately, I did not observe any significant findings.
 
 ## Initial access:
 
-I browsed through the website & observed that it's a replica of the original HTB academy website:
+During my initial exploration of the website, I noticed that it closely resembles the original HTB Academy website:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b825046d-7cd6-49ce-a103-17e53193ec28)
 
-I observed that there is a register & login option, so I just fired up my Burp & registered myself on the academy. While intercepting the request I observed that there is a "roleid" parameter in the request which is set to "0".
+Upon further investigation, I found a "register" and "login" option. Intrigued by the opportunities this presented, I decided to use Burp to intercept the registration request.
+
+In the intercepted request, I discovered a parameter labeled "roleid," which was set to "0":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/41c2dd71-8e1e-4c8b-abe1-f01233e96f7f)
 
-So, next thing I did was registered my self again but changed the "roleid=1". This change in role id from 0 to 1 registered me as an admin user.
+I then proceeded to register myself once again, this time altering the "roleid" to "1." This simple modification allowed me to register as an admin user:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2098a51f-3367-49af-b12b-e3a403dd1ca5)
 
-I used these new credentials to logon as admin on "/admin.php" site & logged in successfully:
+Using the newly acquired admin credentials, I successfully logged into the "/admin.php" site:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2bee9f22-9312-4de1-95dc-c3f63e3364c0)
 
-After logging in to the admin panel I observed that there is another dev staging domain available "dev-staging-01.academy.htb". I added this domain to my hosts config file & browsed thorugh it:
+Within the admin panel, I noticed the existence of another domain, "dev-staging-01.academy.htb." Intrigued by this discovery, I added the domain to my hosts configuration file and proceeded to browse through it:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bf15e951-224d-4d64-9d36-45b4b7edb962)
 
 ### Shell access:
 
-When browsing through this staging environment I observed that there is an app running "Laravel", which also exposed "app_key". Searching for the exploits related to "laravel" I found this on [Github](https://github.com/kozmic/laravel-poc-CVE-2018-15133).
-
-This explains about the RCE in the Laravel application:
+While exploring the "dev-staging-01.academy.htb" staging environment, I made a significant discovery – an application running on Laravel, which exposed its "app_key." This piqued my interest, and I began searching for any related Laravel exploits. My search led me to a promising exploit on [Github](https://github.com/kozmic/laravel-poc-CVE-2018-15133) that explained a Remote Code Execution (RCE) vulnerability in the Laravel application:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d18c32d1-9fff-4ff0-95df-6fe6476cc161)
 
-In another [Github](https://github.com/aljavier/exploit_laravel_cve-2018-15133/tree/main) repo I got the python based poc for this exploit.
+I also came across another [Github](https://github.com/aljavier/exploit_laravel_cve-2018-15133/tree/main) repository that provided a Python-based Proof of Concept (PoC) for this exploit.
+
+I decided to utilize the Python-based exploit, running the following command:
 
 ```python3
 python3 pwn_laravel.py http://dev-staging-01.academy.htb/ dBLUaMuZz7Iq06XtL/Xnz/90Ejq+DEEynggqubHWFj0= --interactive
 ```
-
-Using the python based exploit, I finally got the shell as user "www-data":
+The Python exploit proved to be effective, granting me a shell as the "www-data" user:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b47b9173-d235-4caf-ae22-e1a0d6c49a65)
 
 ## User flag:
 
-While enumerating the "/home" directory I found multiple users in it:
+During my enumeration of the "/home" directory, I discovered multiple users present:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a87c8cb0-6cc4-4062-b9cd-67d6bf1ccba1)
 
-But observed user flag in the "cry0l1t3" directory, for which I haven't the access:
+While investigating further, I noticed the user flag in the "cry0l1t3" directory. Unfortunately, I did not have access to this directory at that moment:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0c14cee1-3ce8-4555-be0b-77707f2400e4)
 
-So, to get the user flag, I started manual enumeration to search for some credentials. While looking into "/var/www/html/academy" I found a environment file, which contains a password for the dev user:
+To acquire the user flag, I decided to perform manual enumeration in search of potential credentials. My efforts led me to the "/var/www/html/academy" directory, where I discovered an environment file containing a password for the "dev" user:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4030066e-0cd3-4156-a95f-88b2d2b61054)
 
-Since, the password belongs to a developer & but there is a possibility of the password re-use & since "cry0l1t3" contains user flag, I tried the same credentials in SSH for "cry0l1t3" & logged in successfully.
+Considering the possibility of password reuse, I attempted to use these credentials to SSH into the "cry0l1t3" account – and successfully gained access:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/207c2bfe-571f-4f9e-8815-92c38896631a)
 
-After logging in, I finally got the user flag. (pwn3d! 🙂)
+After successfully logging in, I was able to obtain the user flag. (pwn3d! 🙂)
 
 ## Privilege escalation:
 
-When I checked the groups of the "cry0l1t3", I observed that he is in the "adm" group. When searched the roles & responsibilities for this group I observed from this [doc](https://wiki.debian.org/SystemGroups): 
+While inspecting the groups associated with the "cry0l1t3" user, I noticed that he belonged to the "adm" group. Upon researching the roles and responsibilities of this group, I found a [Debian wiki page](https://wiki.debian.org/SystemGroups) that shed light on its purpose:
 
 ```
 Group adm is used for system monitoring tasks. Members of this group can read many log files in /var/log, and can use xconsole.
 Historically, /var/log was /usr/adm (and later /var/adm), thus the name of the group. 
 ```
 
-While checking the logs in the audit logs in the "/var/log/aduit" directory I was grepping through the audit files in search of the sensitive text. But from "[0xdf writeup](https://0xdf.gitlab.io/2021/02/27/htb-academy.html") I got to know about a tool called "aureport" that produces summary reports of the audit system logs.
+While reviewing the audit logs located in the "/var/log/audit" directory, I was manually searching for any sensitive text or information. However, during my research, I came across the [0xdf writeup](https://0xdf.gitlab.io/2021/02/27/htb-academy.html%22) which introduced me to the "**aureport**" tool. This tool allows for the generation of summary reports from the audit system logs.
 
-Using the "aureport" tool, I checked for the "tty" keystrokes in audit logs & observed **mrb3n** password in it:
+Utilizing the "aureport" tool, I focused on analyzing the audit logs for "tty" keystrokes and managed to uncover the password for the user "**mrb3n**":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8f3e0bec-71f9-4091-953d-e0c6388f9a39)
 
-Using these credentials I got the access of mrb3n:
+With these credentials in hand, I successfully gained access to the "mrb3n" account:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/59d57e8b-627d-4607-ad07-2e6cc623f825)
 
 ### Root flag:
 
-Once having the access as "mrb3n" I checked for the sudo privileges assigned to him & observed that:
+Once I gained access as the user "mrb3n," I proceeded to check the sudo privileges assigned to this account and observed that:
 
 ```bash
 sudo -l
@@ -159,11 +160,11 @@ User mrb3n may run the following commands on academy:
     (ALL) /usr/bin/composer
 ```
 
-So, I checked on [GtfoBins](https://gtfobins.github.io/gtfobins/composer/#sudo) related to the "composer" binary & observed that we can use below command to get the root shell:
+Based on my findings, I referred to the [GtfoBins](https://gtfobins.github.io/gtfobins/composer/#sudo) page to explore potential privilege escalation using the "composer" binary. From the information provided, I learned that I could utilize the following command to gain a root shell:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ce2d8b59-5dc5-40dd-836d-dbe856c414c2)
 
-I followed the same steps & got the shell as root user & also obtained the root flag : (pwn3d! 🙂)
+Following the steps mentioned in the reference, I executed the command and successfully obtained a root shell. As a result, I gained access as the root user and obtained the root flag: (pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bb868645-bc21-412f-acc2-704ba1887869)
 
