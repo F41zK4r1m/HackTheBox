@@ -124,7 +124,7 @@ Since, the password belongs to a developer & but there is a possibility of the p
 
 After logging in, I finally got the user flag. (pwn3d! 🙂)
 
-### Privilege escalation:
+## Privilege escalation:
 
 When I checked the groups of the "cry0l1t3", I observed that he is in the "adm" group. When searched the roles & responsibilities for this group I observed from this [doc](https://wiki.debian.org/SystemGroups): 
 
@@ -142,3 +142,28 @@ Using the "aureport" tool, I checked for the "tty" keystrokes in audit logs & ob
 Using these credentials I got the access of mrb3n:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/59d57e8b-627d-4607-ad07-2e6cc623f825)
+
+### Root flag:
+
+Once having the access as "mrb3n" I checked for the sudo privileges assigned to him & observed that:
+
+```bash
+sudo -l
+```
+
+```
+Matching Defaults entries for mrb3n on academy:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
+
+User mrb3n may run the following commands on academy:
+    (ALL) /usr/bin/composer
+```
+
+So, I checked on [GtfoBins](https://gtfobins.github.io/gtfobins/composer/#sudo) related to the "composer" binary & observed that we can use below command to get the root shell:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ce2d8b59-5dc5-40dd-836d-dbe856c414c2)
+
+I followed the same steps & got the shell as root user & also obtained the root flag : (pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bb868645-bc21-412f-acc2-704ba1887869)
+
