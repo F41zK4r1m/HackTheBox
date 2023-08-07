@@ -15,6 +15,7 @@
   - [Devel](https://f41zk4r1m.github.io/HackTheBox/Devel) 🪟
   - [Beep](https://f41zk4r1m.github.io/HackTheBox/Beep) 🐧
   - [Traverxec](https://f41zk4r1m.github.io/HackTheBox/Traverxec) 🐧
+  - [Academy](https://f41zk4r1m.github.io/HackTheBox/Academy) 🐧
 
 
 
