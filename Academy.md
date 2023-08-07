@@ -133,3 +133,12 @@ Group adm is used for system monitoring tasks. Members of this group can read ma
 Historically, /var/log was /usr/adm (and later /var/adm), thus the name of the group. 
 ```
 
+While checking the logs in the audit logs in the "/var/log/aduit" directory I was grepping through the audit files in search of the sensitive text. But from "[0xdf writeup](https://0xdf.gitlab.io/2021/02/27/htb-academy.html") I got to know about a tool called "aureport" that produces summary reports of the audit system logs.
+
+Using the "aureport" tool, I checked for the "tty" keystrokes in audit logs & observed **mrb3n** password in it:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8f3e0bec-71f9-4091-953d-e0c6388f9a39)
+
+Using these credentials I got the access of mrb3n:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/59d57e8b-627d-4607-ad07-2e6cc623f825)
