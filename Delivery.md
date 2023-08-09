@@ -92,4 +92,32 @@ I raised a ticket by filling the basic details of usernaeme & email. After filli
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/da0aa1e4-3f18-43f9-97a0-3e697ad0aa26)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0c2cd384-61d0-43ad-94a0-79b0f7cc6eb7)
 
+Next, I went onto the Mattermost domain & tried registering with the fake e-mail but it sends the confirmation e-mail link to the email id & since the box isn't having the internet connection I have to provide the e-mail where I will get verification link which is available inside the "delivery.htb" network.
+
+So, while raising the ticket I got the info that if I want to add more data/query to the ticket I can just e-mail the query to "ticket_no.@delivery.htb" & it will be auto updated in the ticket. By this ticket mail id for which I am having the access as well, I can register my self in the "MatterMost" domain.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3e4d5947-7f4d-49d7-90f1-b776d67f8401)
+
+Once filling the details for account creation I check the ticket queue & I got the verficitation e-mail there:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/059a283f-9f00-4a8d-b525-d69930e40330)
+
+Going through the link verified my account & I got the access:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c038998b-9058-434f-82a5-1eee770bbde7)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Initial access:
+
+Once I logged into the MatterMost domain, I observed that it some kind of chat application juts like Slack & there were few different kind of channels here in which one of the internal channel contains the "mailserver" credentials:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ccd1368e-e017-4cf1-b94c-42c271a3deb4)
+
+Although the credentials belongs to "mailserver" but I though to give it a try with SSH. Using it with SSH finally gave me the initial access on the target host along with the user flag: (pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9528b60b-a342-400b-b726-bb2b0659da29)
+
+
+
 
