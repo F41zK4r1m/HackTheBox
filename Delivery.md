@@ -5,7 +5,7 @@ https://app.hackthebox.com/machines/Delivery
 
 ## Enumeration:
 
-I started with port & service scan running on the target using rustscan & found 3 open ports: 22, 80, 8065
+I initiated the enumeration process by conducting a port and service scan on the target system using the RustScan tool. This scan revealed the existence of three open ports: 22, 80, and 8065.
 
 ```Rust
 PORT     STATE SERVICE REASON         VERSION
@@ -48,22 +48,22 @@ PORT     STATE SERVICE REASON         VERSION
 |_    Content-Length: 0
 ```
 
-While port 22 is running SSH, 80 & 8065 running HTTP servers.
+Port 22 was identified as running SSH, while ports 80 and 8065 were found to be associated with HTTP servers.
 
-I browsed through the port 80 on the browser & observed the webpage is about the e-mail related support:
+Upon navigating to port 80 via a web browser, I encountered a webpage that appeared to be related to e-mail support:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bb840326-732e-4ce8-a689-c65376ba78ab)
 
 
-In the HTML page source I observed 2 domains "delivery.htb" & "helpdesk.delivery.htb", which I added to my hosts file:
+Digging into the HTML source code, I discovered references to two domains: "delivery.htb" and "helpdesk.delivery.htb". To ensure seamless access, I added these domains to my hosts file:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3f6887e4-a83f-4de7-8faa-1a7eebbefb4a)
 
-The helpdesk domain is running "OSQuery" application to raise & check ticket status:
+Subsequently, I explored the "helpdesk.delivery.htb" domain, which was hosting an "OSQuery" application. This platform allowed users to raise and track ticket statuses:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/fc6196e6-7139-4788-982e-061d82a90b74)
 
-As checked the HTTP host on port 8065, I found that there is a service running called "**Mattermost**":
+Concurrently, I investigated the HTTP host running on port 8065, where I encountered a service titled "**Mattermost**":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/811f7b2b-5cea-43a9-b24b-abe0cffe7b78)
 
@@ -71,38 +71,42 @@ As checked the HTTP host on port 8065, I found that there is a service running c
 
 ### Fuzzing:
 
-Once I got the idea of the services running on different ports & domains, I initiated sub-directory enumeration using GoBuster & got multiple results:
+With a better understanding of the services operating on distinct ports and domains, I commenced the sub-directory enumeration process using GoBuster. This meticulous effort yielded a multitude of results:
+
+For the "helpdesk.delivery.htb" domain:
 
 ```bash
 gobuster dir -u http://helpdesk.delivery.htb/ -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x txt,php -e -b 404,403 -k
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/4a9e5208-2b3d-42b1-9cb8-9536f0deddcb)
 
+For the "delivery.htb:8065" domain:
+
 ```bash
 gobuster dir -u http://delivery.htb:8065/ -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x txt,php -e -b 404,403 -k --exclude-length 3108
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/08743205-8878-49bb-9b6b-ef4d8bc079f2)
 
-While browsing through "http://helpdesk.delivery.htb/index.php", there is an "open ticket" option:
+During my exploration of "http://helpdesk.delivery.htb/index.php", I discovered an "open ticket" option:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/1aa41cd1-6fae-44b6-abc9-43c8ad84e40d)
 
-I raised a ticket by filling the basic details of usernaeme & email. After filling the details I got the option to check the ticket status with the ticket no:
+I initiated the process of raising a ticket by providing basic information such as a username and email address. Upon submission, I was assigned a ticket number, which I could use to check the ticket status:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/da0aa1e4-3f18-43f9-97a0-3e697ad0aa26)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/0c2cd384-61d0-43ad-94a0-79b0f7cc6eb7)
 
-Next, I went onto the Mattermost domain & tried registering with the fake e-mail but it sends the confirmation e-mail link to the email id & since the box isn't having the internet connection I have to provide the e-mail where I will get verification link which is available inside the "delivery.htb" network.
+Shifting my focus to the Mattermost domain, I attempted to register using a fabricated email address. However, this process required a confirmation email, and since the machine lacked internet connectivity, I had to provide an email address within the "delivery.htb" network to receive the verification link.
 
-So, while raising the ticket I got the info that if I want to add more data/query to the ticket I can just e-mail the query to "ticket_no.@delivery.htb" & it will be auto updated in the ticket. By this ticket mail id for which I am having the access as well, I can register my self in the "MatterMost" domain.
+It was during the ticket creation process that I learned about the ability to update a ticket by simply emailing a query to "**ticket_no.@delivery.htb**". Armed with access to this ticket email, I seized the opportunity to register an account on the "MatterMost" domain:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3e4d5947-7f4d-49d7-90f1-b776d67f8401)
 
-Once filling the details for account creation I check the ticket queue & I got the verficitation e-mail there:
+Upon completing the registration details, I checked the ticket queue and discovered the verification email waiting for me:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/059a283f-9f00-4a8d-b525-d69930e40330)
 
-Going through the link verified my account & I got the access:
+Following the link within the email successfully verified my account, granting me access to the platform:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c038998b-9058-434f-82a5-1eee770bbde7)
 
@@ -110,11 +114,11 @@ Going through the link verified my account & I got the access:
 
 ## Initial access:
 
-Once I logged into the MatterMost domain, I observed that it some kind of chat application juts like Slack & there were few different kind of channels here in which one of the internal channel contains the "mailserver" credentials:
+Upon successfully logging into the MatterMost domain, I discerned its resemblance to communication platforms like Slack, characterized by various channels. Among these channels, an internal one captured my attention as it contained the credentials for the "mailserver":
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ccd1368e-e017-4cf1-b94c-42c271a3deb4)
 
-Although the credentials belongs to "mailserver" but I though to give it a try with SSH. Using it with SSH finally gave me the initial access on the target host along with the user flag: (pwn3d! 🙂)
+Although these credentials were designated for the "mailserver," I decided to explore their potential for SSH access. To my delight, the SSH connection attempt was successful, marking my initial entry into the target system and granting me the coveted user flag: (pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9528b60b-a342-400b-b726-bb2b0659da29)
 
@@ -123,22 +127,22 @@ Although the credentials belongs to "mailserver" but I though to give it a try w
 
 ## Root.txt:
 
-After obtaining the root flag my next goal is to escalate my privileges & get the root flag. In order to escalate my privileges I started with checking with sudo permissions but observed that the "mailserver" don't have any:
+Having secured the user flag, my next endeavor was to achieve full control over the system, thereby obtaining the elusive root flag. My exploration led me to a thorough inspection of sudo permissions, which unfortunately yielded no promising results:
 
 ```bash
 sudo -l
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9baed0da-8b81-471d-8daa-d0520fc97e0e)
 
-Checked the cronjobs but nothing running there as well:
+Similarly, investigating the cron jobs didn't offer any breakthrough:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/cd68f7c2-0ff1-4b40-8ed2-baf0a8577143)
 
-While enumerating through /var/opt/mattermost directory, I observed "config.json" file where I observed mysql credentials:
+However, as I combed through the **/var/opt/mattermost** directory, I stumbled upon the **config.json** file. It revealed MySQL credentials:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d9cd7af2-7e94-4586-ae4e-652d91a39d77)
 
-I used these credentials to login into mysql database & found a users table which contains username & password hashes:
+Utilizing these credentials, I accessed the MySQL database. There, I discovered a table named **users** containing user IDs, usernames, and password hashes:
 
 ```mysql
 mysql -u mmuser -p #enter the SQL credentials
@@ -150,22 +154,21 @@ select ID, Username, Password from Users;
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/09550379-d21d-4866-962a-c19a0f9d7ea0)
 
-Once I got the root user hash I tried to crack it but I wasn't successfull, seems like the string isn't present in thre rockyou file. 
-As per the internal channel message by "Root" user, he mentioned that "PleaseSubscribe!" may not be in rockyou but attacker can use hashcat variant to crack the hashes.
+Having retrieved the root user hash, I embarked on cracking it. Despite my initial unsuccessful attempts using the common "rockyou" wordlist, a clue from an internal channel message caught my attention. The hint was that "PleaseSubscribe!" might not be present in "rockyou," but a more advanced hash-cracking tool like Hashcat could be employed.
 
-So, I used the best64 rule to create a new wordlist using the hashcat.
+To resolve this, I generated a new wordlist using the "best64" rule from Hashcat:
 
 ```bash
 hashcat --stdout password -r /usr/share/hashcat/rules/best64.rule > new_pass_list #where password file contains "PleaseSubscribe!"
 ```
 
-After generating the new list I used **haiti** to detect the password hash algorith & using the John with new password list I was able to crack the hash within a second.
+Subsequently, utilizing haiti to identify the password hash algorithm and then employing John the Ripper with the newly created password list, I was astounded to find that the hash was cracked in mere seconds:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/cea17abc-8fa9-4198-b8d3-de2b12d97382)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e4af615f-fbdc-4e37-be2e-815c1779d2b3)
 
-Using the newly cracked credentials I was able to login into root user & managed to get the root flag as well. (pwn3d! 🙂)
+Equipped with the cracked credentials, I triumphantly logged in as the root user and triumphantly claimed the root flag. (pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f91e71a9-f07a-4d92-a945-da290742e6bd)
 
