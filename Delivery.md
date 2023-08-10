@@ -150,4 +150,22 @@ select ID, Username, Password from Users;
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/09550379-d21d-4866-962a-c19a0f9d7ea0)
 
+Once I got the root user hash I tried to crack it but I wasn't successfull, seems like the string isn't present in thre rockyou file. 
+As per the internal channel message by "Root" user, he mentioned that "PleaseSubscribe!" may not be in rockyou but attacker can use hashcat variant to crack the hashes.
+
+So, I used the best64 rule to create a new wordlist using the hashcat.
+
+```bash
+hashcat --stdout password -r /usr/share/hashcat/rules/best64.rule > new_pass_list #where password file contains "PleaseSubscribe!"
+```
+
+After generating the new list I used **haiti** to detect the password hash algorith & using the John with new password list I was able to crack the hash within a second.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/cea17abc-8fa9-4198-b8d3-de2b12d97382)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e4af615f-fbdc-4e37-be2e-815c1779d2b3)
+
+Using the newly cracked credentials I was able to login into root user & managed to get the root flag as well. (pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f91e71a9-f07a-4d92-a945-da290742e6bd)
 
