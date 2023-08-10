@@ -7,7 +7,7 @@ https://app.hackthebox.com/machines/Delivery
 
 I started with port & service scan running on the target using rustscan & found 3 open ports: 22, 80, 8065
 
-```
+```Rust
 PORT     STATE SERVICE REASON         VERSION
 22/tcp   open  ssh     syn-ack ttl 63 OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
 | ssh-hostkey: 
@@ -119,5 +119,35 @@ Although the credentials belongs to "mailserver" but I though to give it a try w
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9528b60b-a342-400b-b726-bb2b0659da29)
 
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Root.txt:
+
+After obtaining the root flag my next goal is to escalate my privileges & get the root flag. In order to escalate my privileges I started with checking with sudo permissions but observed that the "mailserver" don't have any:
+
+```bash
+sudo -l
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/9baed0da-8b81-471d-8daa-d0520fc97e0e)
+
+Checked the cronjobs but nothing running there as well:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/cd68f7c2-0ff1-4b40-8ed2-baf0a8577143)
+
+While enumerating through /var/opt/mattermost directory, I observed "config.json" file where I observed mysql credentials:
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/d9cd7af2-7e94-4586-ae4e-652d91a39d77)
+
+I used these credentials to login into mysql database & found a users table which contains username & password hashes:
+
+```mysql
+mysql -u mmuser -p #enter the SQL credentials
+
+show databases;
+use mattermost;
+descride users;
+select ID, Username, Password from Users;
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/09550379-d21d-4866-962a-c19a0f9d7ea0)
 
 
