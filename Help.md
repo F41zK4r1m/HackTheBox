@@ -153,3 +153,34 @@ After making the neccessary changes I executed the code again & started my netca
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/cf4d8efe-2e68-4fe8-bd97-568d7e3e5c24)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privilege Esclation:
+
+After obtaining the user flag my next objective is to gain root flag & to get the root flag I have to esclate my privileges. 
+In search of the privilege escalation vectors, I started with manula enumeration:
+
+- checked sudo privileges "sudo -l" but as I don't have the user credentials I wasn't able to run the command.
+- Checked for cron jobs but nothing is running.
+- Checked for the OS verison & observed it's running "4.4.0-116-generic #140-Ubuntu"
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e474ad75-0d39-45f9-a984-921cc547834e)
+
+I checked the linux kernel version in searchsploit & observed that this version is vulnerable to "CVE-2017-16995", also there is an exploit available for it.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/98aa420e-1da0-4078-90f3-1b644165684d)
+
+
+I downloaded the exploit & compiled the exploit as it's written in C.
+
+```bash
+gcc 44298.c -o exploit
+```
+
+After compiling the exploit I moved transferred it to the target box & executed it.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/a2dd9933-d91b-46a2-81b7-bcc72daab21e)
+
+After transferring the exploit I executed it & quckly got the rool shell after which I  grabbed the root flag as well. (Pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e03f86f3-75f4-496e-9bcb-6f56dcbc19bc)
