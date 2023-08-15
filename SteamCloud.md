@@ -295,3 +295,13 @@ kubeletctl exec /bin/bash -p nginx -c nginx -s 10.10.11.133 #used the vulnerable
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ec91dcff-ba59-46cb-bcfe-e2d276676e5a)
 
 After getting the connection as root, I fetched the user flag as well. (pwn3d! 🙂)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Docker Escape:
+
+After fetching the user flag & getting the shell as root. I performed some manual enumeration & observed that I am in a docker environment.
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f86b90e8-925d-4012-8330-24957f0e8791)
+
+
