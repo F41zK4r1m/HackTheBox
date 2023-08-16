@@ -16,8 +16,9 @@
   - [Beep](https://f41zk4r1m.github.io/HackTheBox/Beep) 🐧
   - [Traverxec](https://f41zk4r1m.github.io/HackTheBox/Traverxec) 🐧
   - [Academy](https://f41zk4r1m.github.io/HackTheBox/Academy) 🐧
-  - [Delivery](https://f41zk4r1m.github.io/HackTheBox/Academy/Delivery) 🐧
-  - [Help](https://f41zk4r1m.github.io/HackTheBox/Academy/Help) 🐧
+  - [Delivery](https://f41zk4r1m.github.io/HackTheBox/Delivery) 🐧
+  - [Help](https://f41zk4r1m.github.io/HackTheBox/Help) 🐧
+  - [SteamCloud](https://f41zk4r1m.github.io/HackTheBox/SteamCloud) 🐧
 
 
 
