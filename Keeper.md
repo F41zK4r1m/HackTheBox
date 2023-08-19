@@ -6,7 +6,7 @@ https://app.hackthebox.com/machines/Keeper
 
 ## Enumeration:
 
-I started my enumeration with the quick rustscan to check for open ports & services running. After the scan is complete I only observed 2 open ports:
+I initiated the enumeration process by utilizing the "rustscan" tool to identify open ports and active services. Following the scan, I was able to identify two active ports:
 
 ```bash
 sudo rustscan -a 10.10.11.227 -- -sC -sV -vv -oN keeper_nmap
@@ -29,23 +29,25 @@ PORT   STATE SERVICE REASON         VERSION
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-Once the scan is complete & I found that port 80 is open & http server is running, I browsed the IP & observed a domain on the webpage.
+Upon completion of the scan, my attention was drawn to port 80, where an HTTP server was detected. Prompted by this discovery, I accessed the IP through a web browser, revealing a domain on the displayed webpage.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/fd45cca8-24c2-4e23-9e8c-06e1ce6fc61f)
 
-I added these domains "keeper.htb" & "tickets.keeper.htb" to my host config file.
+To facilitate further exploration, I appended the domains "keeper.htb" and "tickets.keeper.htb" to my local host configuration file. 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Fuzzing:
 
-Once I added the domain to the host config file I performed VHOST & Sub-directory enumeration on both the domains. But didn't found anything much useful.
-Moving further I borwsed through the tickets domain & I observed a login panel:
+With the domains properly configured in my host file, I moved on to performing Virtual Host (VHOST) and sub-directory enumeration on both "keeper.htb" and "tickets.keeper.htb." However, the results did not yield any substantial leads.
+
+My focus then shifted to the "tickets.keeper.htb" domain, where I encountered a login panel:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/bc3c4e25-5480-43ae-b45b-0e3225408118)
 
-I tried basic SQL injections but none of them wroked. I observed the page is running BestPractical application solution so I searched for the exploits but didn't found anything relavent as well.
-Then I checked for the default credentials for the BestPractical logon & on this [page](https://www.192-168-1-1-ip.co/router/bestpractical/rt/12338/) I observed "root:password" as default credentials.
+In my attempt to exploit this panel, I experimented with basic SQL injection techniques, but none of them proved successful. Recognizing that the page operated on the BestPractical application solution, I began searching for relevant exploits. Regrettably, I didn't come across any immediately applicable exploits.
+
+Continuing my investigation, I decided to explore default login credentials for BestPractical. My search led me to a [webpage](https://www.192-168-1-1-ip.co/router/bestpractical/rt/12338/) where I uncovered default login credentials: "root:password."
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/c8eb0517-d25c-4e7c-b5a5-ffeb456c2eb1)
 
@@ -53,18 +55,17 @@ Then I checked for the default credentials for the BestPractical logon & on this
 
 ## Initial access:
 
-I tried the deafult credentials "root:password" & successfully logged into the BestPractical application.
-After logging in I got the control panel access of the application as I logged in as a root user.
+Utilizing the default credentials "root:password," I gained access to the BestPractical application. This allowed me to infiltrate the application's control panel, essentially assuming the role of a root user within the platform.
 
-Moving further when I was enumerating through each & every option I observed a user under: Admin> Users > Select
+As I delved into the various options available, I stumbled upon a significant discovery. Navigating to **Admin > Users > Select**, I encountered a user profile for "lnorgaard."
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/011cf406-7117-4e4c-af22-cc56fcaafb77)
 
-I observed a user "lnorgaard", when I clicked on the user details I found his credentials in the comments:
+More notably, within the comments section of this user's details, I located a set of credentials:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/5617acae-9399-45a7-a668-da840ebf5073)
 
-Using these credentials I logged in via SSH & successfully grabbed the user flag as well. (pwn3d! 🙂)
+Leveraging these newfound credentials, I initiated an SSH login, successfully establishing a connection using "lnorgaard" as the user. This accomplishment marked a major milestone as I managed to procure the user flag during this phase of the engagement. (Pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/3c925115-6ad2-47c9-8483-5e7f7a44e864)
 
@@ -72,42 +73,41 @@ Using these credentials I logged in via SSH & successfully grabbed the user flag
 
 ## Privilege Escalation:
 
-Once I obtained the user flag I was looking for the possible vectors to escalate my privileges to gain root access. In the user folder it self I found a zip file "RT30000.zip", which transferred into my local kali host.
-Once unzipped the file I obsereved 2 files from it:
+Having successfully obtained the user flag, my focus shifted towards identifying potential avenues for privilege escalation, ultimately aiming to attain root access. Within the user's directory, I stumbled upon a compressed file named "RT30000.zip," which I promptly transferred to my local Kali host.
+
+Upon extraction, two files greeted me:
 
 - KeePassDumpFull.dmp
 - passcodes.kdbx
 
-Both of these files are from May 24 & looks like a dump from KeePass password manager. When checking for the exploits of the KeePass I found an article on [Hacker news](https://thehackernews.com/2023/05/keepass-exploit-allows-attackers-to.html) website.
+Both files were last modified on May 24 and appeared to be related to a KeePass password manager dump. In my search for relevant exploits regarding KeePass, I came across an article on [Hacker News](https://thehackernews.com/2023/05/keepass-exploit-allows-attackers-to.html).
 
-According to the article, we can extract the clear text credentials from the KeePass by just using the memory dump.
+The article detailed a method to extract clear text credentials from KeePass using a memory dump, underscoring the significance of the discovery:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/910db56a-fc13-4274-8d49-5c81d6be013b)
 
-I also found a POC on the [Github](https://github.com/CMEPW/keepass-dump-masterkey.git) for CVE-2023-32784. I clone this password dumper into my kali host.
-
-After cloning I executed the poc to get the passwords:
+Additionally, I chanced upon a Proof of Concept (POC) for CVE-2023-32784 on [GitHub](https://github.com/CMEPW/keepass-dump-masterkey.git). Intrigued by the possibilities, I cloned the repository to my Kali host and executed the POC to initiate the password extraction process:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/2e993cb4-c37a-47e7-8b4e-696ef6c06f60)
 
-Once the dumping is completed I got the list of the possible passwords:
+Upon completion, the dumped passwords were revealed:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/f2038a77-d937-4f6b-be58-9972631b0da7)
 
-I opened the KeePass application, imported "passcode.kdbx" & then I used all the possible password one after another but none of them wroked. 😕
-So I started searching the keywords on google where I observed a desert similar with the password pattern:
+Upon obtaining the password list, I attempted to access the KeePass application, importing the "passcode.kdbx" file. Despite employing the extracted passwords, my efforts proved futile. 
+
+Determined to uncover a viable option, I decided to employ keyword searches, leading me to a noteworthy discovery. I found a reference to a desert concept, offering an alternative pattern:
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/dc7aa714-f89f-4c50-be69-560ed50b2821)
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/e90c57cf-d0f0-4934-8404-642d2c0e626c)
 
-This time I used this new string to unlock the password file & it finally worked. 🙂
-After the successfull import I looked through all the databases & found a putty private key in notes & password in it belongs to root user.
+This time, utilizing this new string as the password, I managed to successfully unlock the password file. With the successful import of the password database, I meticulously examined its contents, discovering a Putty private key & password within the notes section. The corresponding password was associated with the root user.
 
-I tried to use the password but that didn't worked. Then the other option left is that I have to utilize Putty private key file to logon with SSH, which is in ".ppk" format currently.
+Attempting to employ the password for root access proved unsuccessful. However, it became evident that the Putty private key would be the key to my success. This private key was in ".ppk" format, requiring conversion to OpenSSH format for SSH login.
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/601e0544-c1e8-4e58-9d7f-12e909cf03b5)
 
-So, to login with root user I have to convert the ".ppk" file in the Open-SSH format. To convert the file I installed putty & used putty agent to convert the file into open-ssh format:
+To facilitate this conversion, I installed Putty and utilized the Putty agent to transform the ".ppk" file into OpenSSH format:
 
 ```bash
 sudo apt install putty
@@ -115,7 +115,7 @@ sudo apt install putty
 puttygen putty.ppk -O private-openssh -o id_rsa
 ```
 
-Once the file is converted I used it to logon via SSH as root user & obtained the root flag. (pwn3d! 🙂)
+With the successful conversion of the key file, I was able to employ it for SSH login as the root user, ultimately attaining root-level privileges. This accomplishment marked the culmination of my journey to obtain the root flag. (Pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/HackTheBox/assets/87700008/8d947ae9-a6b4-42f2-b6c1-b4b1d1f0ac44)
 
