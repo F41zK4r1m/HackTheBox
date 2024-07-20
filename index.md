@@ -19,7 +19,7 @@
   - [Delivery](https://f41zk4r1m.github.io/HackTheBox/Delivery) 🐧
   - [Help](https://f41zk4r1m.github.io/HackTheBox/Help) 🐧
   - [SteamCloud](https://f41zk4r1m.github.io/HackTheBox/SteamCloud) 🐧
-  - [Headless](https://f41zk4r1m.github.io/HackTheBox/Headless.md)🐧
+  - [Headless](https://f41zk4r1m.github.io/HackTheBox/Headless)🐧
 
 
 
