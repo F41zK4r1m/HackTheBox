@@ -29,6 +29,7 @@
   - [Ambassador](https://f41zk4r1m.github.io/HackTheBox/Ambassador) 🐧
   - [Investigation](https://f41zk4r1m.github.io/HackTheBox/Investigation) 🐧
   - [outdated](https://f41zk4r1m.github.io/HackTheBox/outdated) 🪟
+  - [Monteverde](https://f41zk4r1m.github.io/HackTheBox/Monteverde) 🪟
 
 ## Hard Boxes:
 
