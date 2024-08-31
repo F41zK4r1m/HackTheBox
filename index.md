@@ -21,6 +21,7 @@
   - [SteamCloud](https://f41zk4r1m.github.io/HackTheBox/SteamCloud) 🐧
   - [Headless](https://f41zk4r1m.github.io/HackTheBox/Headless) 🐧
   - [Timelapse](https://f41zk4r1m.github.io/HackTheBox/Timelapse) 🪟
+  - [Return](https://f41zk4r1m.github.io/HackTheBox/Return)🪟
 
 
 
