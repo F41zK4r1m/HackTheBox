@@ -36,5 +36,6 @@
 
 ## Hard Boxes:
 
+  - [Flight](https://f41zk4r1m.github.io/HackTheBox/Flight) 🪟
  
 ## Insane Boxes:
